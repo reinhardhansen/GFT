@@ -8,7 +8,7 @@ Hansen). A standard Julia package: standard libraries only
 ## Installation
 
 ```julia
-using Pkg; Pkg.add(url = "https://github.com/<user>/GFT.jl")
+using Pkg; Pkg.add(url = "https://github.com/reinhardhansen/GFT")
 using GFT
 ```
 

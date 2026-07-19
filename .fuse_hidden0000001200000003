@@ -1,0 +1,71 @@
+# Two final checks requested in review, on the SAME serialized draws as
+# the overnight run (the RNG stream is replayed so the z-design inputs
+# are identical to those behind Table 1):
+#
+#   1. Tolerance sensitivity on the z ~ N(0,16I) design at 1e-6 and
+#      1e-13, same 1000 inputs at both tolerances.
+#   2. Broyden with equal globalization: the published one-step
+#      initialization versus the same log-domain fixed-point phase as
+#      GFT-FP+N (fixed-point steps until max ell <= log 2), on the
+#      same 1000 draws of each extreme design.
+#
+# Run:  julia -t 1 final_checks.jl        (about 10-15 minutes)
+# Output: results/final.csv and console summary.
+
+include("GFT.jl")
+using .GFT
+using LinearAlgebra, Random, Statistics, Printf
+
+BLAS.set_num_threads(1)
+const TOL = 1e-13
+
+# --- replay the overnight RNG stream to recover the table's z draws
+rng = MersenneTwister(18900217)
+for _ in 1:1000; randn(rng, 100, 200); end       # wishart_n100
+for _ in 1:1000; rand(rng, 100); end             # factor_n100
+d = 50 * 49 ÷ 2
+zs2 = [2.0 * randn(rng, d) for _ in 1:1000]      # z_sd2 draws (Table 1)
+zs4 = [4.0 * randn(rng, d) for _ in 1:1000]      # z_sd4 draws (Table 1)
+
+# warmup
+let C = 0.9 .^ abs.((1:10) .- (1:10)')
+    z = gft(C)
+    inv_gft(z); inv_gft_broyden(z); inv_gft_broyden(z; globalized = true)
+    inv_gft_fp(z); inv_gft_newton(z)
+end
+
+function summarize(tag, results)
+    es = [r.eighs for r in results if r.converged]
+    fails = count(r -> !r.converged, results)
+    med = isempty(es) ? NaN : median(es)
+    @printf("%-28s median eighs=%6.1f fails=%d/%d\n", tag, med, fails,
+            length(results))
+    return (med, fails, length(results))
+end
+
+open("results/final.csv", "w") do io
+    println(io, "experiment,method,eighs_med,fails,total")
+
+    println("== tolerance sensitivity, z~N(0,16I), same 1000 inputs ==")
+    for tol in (1e-6, 1e-13)
+        for (m, sv) in (("fp", z -> inv_gft_fp(z; tol = tol, maxit = 5000)),
+                        ("broyden", z -> inv_gft_broyden(z; tol = tol)),
+                        ("newton", z -> inv_gft_newton(z; tol = tol, warm = 1)),
+                        ("fpn", z -> inv_gft(z; tol = tol)))
+            med, fails, tot = summarize("tol=$tol $m", [sv(z) for z in zs4])
+            println(io, "tol_$tol,$m,$med,$fails,$tot")
+        end
+    end
+
+    println("== Broyden, equal globalization, same 1000 inputs ==")
+    for (tag, zs) in (("sd2", zs2), ("sd4", zs4))
+        for (m, sv) in (("published", z -> inv_gft_broyden(z; tol = TOL)),
+                        ("globalized", z -> inv_gft_broyden(z; tol = TOL,
+                                                            globalized = true)),
+                        ("fpn", z -> inv_gft(z; tol = TOL)))
+            med, fails, tot = summarize("$tag broyden-$m", [sv(z) for z in zs])
+            println(io, "broyden_$tag,$m,$med,$fails,$tot")
+        end
+    end
+end
+println("done: results/final.csv")

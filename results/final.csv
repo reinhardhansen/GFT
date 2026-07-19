@@ -1,0 +1,17 @@
+experiment,method,eighs_med,fails,total
+tol_1.0e-6,fp,440.5,0,1000
+tol_1.0e-6,broyden,35.0,978,1000
+tol_1.0e-6,newton,21.0,0,1000
+tol_1.0e-6,fpn,21.0,0,1000
+tol_1.0e-13,fp,1008.5,0,1000
+tol_1.0e-13,broyden,52.0,978,1000
+tol_1.0e-13,newton,23.0,76,1000
+tol_1.0e-13,fpn,23.0,0,1000
+broyden_sd2,published,38.0,53,1000
+broyden_sd2,globalized,29.0,1,1000
+broyden_sd2,fpn,17.0,0,1000
+broyden_sd4,published,52.0,978,1000
+broyden_sd4,globalized,43.0,166,1000
+broyden_sd4,fpn,23.0,0,1000
+newtonsafe_sd2,exact_hess,13.0,0,1000
+newtonsafe_sd4,exact_hess,18.0,0,1000

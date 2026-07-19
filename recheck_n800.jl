@@ -1,0 +1,44 @@
+# Re-run only the 500 factor_n800 draws from overnight.jl (same RNG
+# stream), isolating the design that motivated the terminal safeguard.
+#
+# Run:  julia -t 1 recheck_n800.jl        (about 30-45 minutes)
+
+import Pkg; Pkg.activate(@__DIR__; io = devnull)
+using GFT
+using LinearAlgebra, Random, Printf
+
+BLAS.set_num_threads(1)
+const TOL = 1e-13
+
+# --- replay the RNG stream of overnight.jl up to the n=800 block
+rng = MersenneTwister(18900217)
+for _ in 1:1000; randn(rng, 100, 200); end       # wishart_n100 draws
+for _ in 1:1000; rand(rng, 100); end             # factor_n100 draws
+for _ in 1:2000; randn(rng, 50 * 49 ÷ 2); end    # z_sd2 and z_sd4 draws
+
+# warmup (JIT)
+let C = 0.9 .^ abs.((1:10) .- (1:10)')
+    inv_gft(gft(C))
+end
+
+worst = 0
+fails = 0
+es = Int[]
+for i in 1:500
+    b = 0.8 .+ 0.195 .* rand(rng, 800)
+    C = b * b' + Diagonal(1 .- b .^ 2)
+    z = gft(C)
+    t0 = time_ns()
+    r = inv_gft(z; tol = TOL)
+    t = (time_ns() - t0) / 1e9
+    global worst = max(worst, r.eighs)
+    r.converged || (global fails += 1)
+    push!(es, r.eighs)
+    if r.eighs > 20 || !r.converged
+        @printf("draw %2d: eighs=%4d hv=%4d time=%6.2fs err=%.1e conv=%s\n",
+                i, r.eighs, r.hvs, t, r.err, r.converged)
+    end
+end
+using Statistics
+@printf("n=800 recheck: median eighs=%.0f [%.0f,%.0f] max=%d fails=%d/500\n",
+        median(es), quantile(es, .25), quantile(es, .75), worst, fails)

@@ -1,0 +1,151 @@
+# Benchmark suite reproducing Table 1 and the warm-start experiment of the
+# paper, in Julia. Standard libraries only.
+#
+# Run:  julia -t 1 bench.jl           (single-threaded, as in the paper)
+#       julia -t 1 bench.jl warm      (warm-start experiment only)
+#
+# Notes.
+#  * BLAS threading affects timings; the paper uses one thread:
+#    set below via BLAS.set_num_threads(1).
+#  * Random draws use MersenneTwister(18900217); distributions match the
+#    Python suite but draws are not bit-identical across languages, so
+#    medians may differ slightly on random designs.
+#  * Run everything twice or discard the first call: Julia compiles on
+#    first use (the warmup() call below handles this).
+
+import Pkg; Pkg.activate(@__DIR__; io = devnull)
+using GFT
+using LinearAlgebra, Random, Statistics, Printf
+
+BLAS.set_num_threads(1)
+
+const TOL = 1e-13
+const SEED = 18900217
+
+corr_toeplitz(n, rho) = rho .^ abs.((1:n) .- (1:n)')
+
+function corr_wishart(rng, n; dof = 2n)
+    X = randn(rng, n, dof); S = X * X'
+    Dh = Diagonal(1 ./ sqrt.(diag(S)))
+    return Dh * S * Dh
+end
+
+function corr_factor(rng, n, lo, hi)
+    b = lo .+ (hi - lo) .* rand(rng, n)
+    return b * b' + Diagonal(1 .- b .^ 2)
+end
+
+function lmin_Hstar(z, x)
+    A = unvecl(z) + Diagonal(x)
+    F = eigen(Symmetric(A))
+    return eigmin(Symmetric(GFT.hessian(F.values, F.vectors)))
+end
+
+const METHODS = Dict(
+    "fp"      => z -> inv_gft_fp(z; tol = TOL, maxit = 5000),
+    "broyden" => z -> inv_gft_broyden(z; tol = TOL),
+    "newton"  => z -> inv_gft_newton(z; tol = TOL, warm = 1),
+    "fpn"    => z -> inv_gft(z; tol = TOL),
+)
+
+function run_case(tag, zs, methods; reps_time = 1)
+    println("\n== $tag  ($(length(zs)) draws) ==")
+    n = round(Int, (1 + sqrt(1 + 8 * length(zs[1]))) / 2)
+    lm = n <= 300 ? lmin_Hstar(zs[1], inv_gft(zs[1]; tol = TOL).x) : NaN
+    for m in methods
+        ts = Float64[]; es = Int[]; hv = Int[]; fail = 0
+        for z in zs
+            best = Inf
+            local r
+            for _ in 1:reps_time
+                t0 = time_ns()
+                r = METHODS[m](z)
+                best = min(best, (time_ns() - t0) / 1e9)
+            end
+            if !r.converged
+                fail += 1
+                continue
+            end
+            push!(ts, best); push!(es, r.eighs); push!(hv, r.hvs)
+        end
+        if isempty(ts)
+            @printf("  %-8s ALL FAILED (%d/%d)\n", m, fail, length(zs))
+        else
+            @printf("  %-8s eighs=%6.0f [%.0f,%.0f] hv=%5.0f time=%9.2fms [%.2f,%.2f] fail=%d/%d\n",
+                    m, median(es), quantile(es, 0.25), quantile(es, 0.75),
+                    median(hv), 1e3 * median(ts),
+                    1e3 * quantile(ts, 0.25), 1e3 * quantile(ts, 0.75),
+                    fail, length(zs))
+        end
+    end
+    @printf("  [1 - lmin(H*) = %.3f]\n", 1 - lm)
+end
+
+function warmup()
+    z = gft(corr_toeplitz(10, 0.5))
+    for m in values(METHODS)
+        m(z)
+    end
+end
+
+function main(which)
+    warmup()
+    rng = MersenneTwister(SEED)
+    if which in ("all", "toeplitz")
+        for n in (100, 300), rho in (0.5, 0.9, 0.99)
+            meths = n <= 100 ? ["fp", "broyden", "newton", "fpn"] :
+                               ["fp", "broyden", "fpn"]
+            run_case("Toeplitz rho=$rho n=$n",
+                     [gft(corr_toeplitz(n, rho))], meths; reps_time = 3)
+        end
+    end
+    if which in ("all", "random")
+        zs = [gft(corr_wishart(rng, 100)) for _ in 1:20]
+        run_case("Wishart(2n) n=100", zs, ["fp", "broyden", "newton", "fpn"])
+        zs = [gft(corr_factor(rng, 100, 0.85, 0.999)) for _ in 1:20]
+        run_case("One-factor U(.85,.999) n=100", zs,
+                 ["fp", "broyden", "newton", "fpn"])
+    end
+    if which in ("all", "extreme")
+        d = 50 * 49 ÷ 2
+        for s in (2.0, 4.0)
+            zs = [s * randn(rng, d) for _ in 1:20]
+            run_case("z~N(0,$(s^2) I) n=50", zs,
+                     ["fp", "broyden", "newton", "fpn"])
+        end
+    end
+    if which in ("all", "big")
+        zs = [gft(corr_factor(rng, 800, 0.8, 0.995)) for _ in 1:3]
+        run_case("One-factor n=800", zs, ["fp", "fpn"])
+    end
+    if which in ("all", "warm")
+        # step 0.002 per coordinate: consecutive vectors differ by about
+        # 0.14 in Euclidean norm at n=100, a genuinely nearby sequence
+        n, T, step = 100, 50, 0.002
+        z = gft(corr_factor(rng, n, 0.85, 0.999))
+        seq = [copy(z)]
+        for _ in 2:T
+            push!(seq, seq[end] + step * randn(rng, length(z)))
+        end
+        println("\n== warm-start sequence n=$n T=$T ==")
+        for m in ("fp", "broyden", "fpn")
+            x0 = nothing; tot_e = 0; tot_t = 0.0
+            for zt in seq
+                t0 = time_ns()
+                r = m == "fp" ?
+                        inv_gft_fp(zt; x0 = x0, tol = TOL, maxit = 5000) :
+                    m == "broyden" ?
+                        inv_gft_broyden(zt; x0 = x0, tol = TOL,
+                                        warm = x0 === nothing ? 1 : 0) :
+                        inv_gft(zt; x0 = x0, tol = TOL)
+                tot_t += (time_ns() - t0) / 1e9
+                tot_e += r.eighs
+                x0 = r.x
+            end
+            @printf("  %-8s eighs/step=%6.2f time/step=%7.2fms\n",
+                    m, tot_e / T, 1e3 * tot_t / T)
+        end
+    end
+end
+
+main(isempty(ARGS) ? "all" : ARGS[1])

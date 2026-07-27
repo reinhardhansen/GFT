@@ -1,6 +1,6 @@
-started: 2026-07-19T02:29:35.050
+started: 2026-07-27T17:00:58.859
 julia: 1.12.6
 blas: LBTConfig([ILP64] libopenblas64_.dylib)
 threads: 1
 REPS=1000 REPS_BIG=500 RATE_PTS=1000 SEED=18900217
-finished: 2026-07-19T06:59:39.771
+finished: 2026-07-27T21:42:23.503

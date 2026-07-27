@@ -243,13 +243,13 @@ function inv_gft_broyden(z::AbstractVector; x0 = nothing, tol = 1e-13,
 end
 
 """
-    inv_gft_newton(z; x0=nothing, tol=1e-13, maxit=100, warm=1)
+    inv_gft_newton(z; x0=nothing, tol=1e-13, maxit=500, warm=1)
 
 Full Newton with the exact O(n^4) Hessian recomputed at every iteration,
 Armijo backtracking on f, optional fixed-point warm start.
 """
 function inv_gft_newton(z::AbstractVector; x0 = nothing, tol = 1e-13,
-                        maxit = 100, warm = 1)
+                        maxit = 500, warm = 1)
     A0, n, x = _prep(z, x0)
     hist = Float64[]
     eighs = 0

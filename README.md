@@ -16,6 +16,11 @@ Or run any of the scripts below directly from this folder; they activate
 the package environment themselves (`julia -t 1 runtests.jl` etc.).
 `Pkg.test("GFT")` runs the full test suite.
 
+## R package
+
+An R port with the same API (base R only, no dependencies) lives in
+[`r/`](r/): `remotes::install_github("reinhardhansen/GFT", subdir = "r")`.
+
 ## Files
 
 - `src/GFT.jl` — the module: `gft` (forward map), `inv_gft` (GFT-FP+N,

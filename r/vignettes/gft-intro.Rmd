@@ -1,0 +1,112 @@
+---
+title: "The generalized Fisher transformation and its inverse"
+author: "Ilya Archakov and Peter Reinhard Hansen"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{The generalized Fisher transformation and its inverse}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+```{r setup}
+library(GFT)
+```
+
+## The transformation
+
+The generalized Fisher transformation (GFT) of a non-singular $n \times n$
+correlation matrix $C$ is
+$$\gamma = \mathrm{vecl}(\log C) \in \mathbb{R}^d, \qquad d = n(n-1)/2,$$
+the below-diagonal elements of the matrix logarithm of $C$, stacked column
+by column. Archakov and Hansen (2021) showed that this map is a bijection
+between the set of positive definite correlation matrices and
+$\mathbb{R}^d$. For $n = 2$ it reduces to Fisher's classical
+$z$-transformation:
+
+```{r}
+C <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
+c(gft(C), atanh(0.5))
+```
+
+A correlation matrix is mapped to an unrestricted vector:
+
+```{r}
+C <- 0.9^abs(outer(1:5, 1:5, "-"))   # Toeplitz correlation matrix
+z <- gft(C)
+z
+```
+
+## The inverse
+
+The inverse is not available in closed form for $n \ge 3$. It is computed
+from the variational characterization
+$$x^*(z) = \arg\min_x \; \mathrm{tr}\, e^{A[x;z]} - \sum_i x_i,$$
+where $A[x;z]$ is the symmetric matrix with off-diagonal elements $z$ and
+diagonal $x$: at the minimizer, $C = e^{A[x^*;z]}$ is the unique
+correlation matrix with $\mathrm{vecl}(\log C) = z$. The recommended
+solver is `inv_gft()`, the GFT-FP+N algorithm of Archakov and Hansen
+(2026): a globally convergent fixed-point phase in the log domain,
+followed by a matrix-free inexact Newton phase.
+
+```{r}
+r <- inv_gft(z)
+r
+max(abs(r$C - C))
+```
+
+Because the GFT is a bijection, *any* vector in $\mathbb{R}^d$ is a valid
+input, which makes the parametrization convenient for unconstrained
+estimation and modeling of correlation matrices:
+
+```{r}
+set.seed(42)
+r <- inv_gft(rnorm(45, sd = 2))      # n = 10
+range(diag(r$C))                     # unit diagonal
+min(eigen(r$C, symmetric = TRUE)$values)  # positive definite
+```
+
+## Solvers
+
+Three reference solvers accompany `inv_gft()`: the plain
+Archakov--Hansen fixed point, Broyden's method (Chen, Fei and Yu, 2025),
+and full Newton with the exact $O(n^4)$ Hessian. All count
+eigendecompositions (`eighs`), the dominant $O(n^3)$ kernel:
+
+```{r}
+set.seed(1)
+z <- rnorm(190, sd = 2)              # n = 20, demanding spectrum
+data.frame(
+  solver = c("inv_gft (GFT-FP+N)", "inv_gft_fp", "inv_gft_broyden",
+             "inv_gft_newton"),
+  eighs = c(inv_gft(z)$eighs, inv_gft_fp(z)$eighs,
+            inv_gft_broyden(z)$eighs, inv_gft_newton(z)$eighs),
+  converged = c(inv_gft(z)$converged, inv_gft_fp(z)$converged,
+                inv_gft_broyden(z)$converged, inv_gft_newton(z)$converged)
+)
+```
+
+For sequences of nearby problems (e.g. along a filtration), warm starts
+cut the cost further:
+
+```{r}
+z2 <- z + 0.01
+c(cold = inv_gft(z2)$eighs, warm = inv_gft(z2, x0 = inv_gft(z)$x)$eighs)
+```
+
+## References
+
+Archakov, I. and Hansen, P. R. (2021). A new parametrization of
+correlation matrices. *Econometrica*, 89(4), 1699--1715.
+[doi:10.3982/ECTA16910](https://doi.org/10.3982/ECTA16910)
+
+Archakov, I. and Hansen, P. R. (2026). A variational approach to the
+generalized Fisher transformation of correlation matrices. Working
+paper.
+
+Chen, H., Fei, Y. and Yu, J. (2025). Multivariate stochastic volatility
+models based on generalized Fisher transformation. *Journal of
+Econometrics*, 251, 106041.

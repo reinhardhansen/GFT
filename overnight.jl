@@ -47,7 +47,8 @@ end
 const METHODS = Dict(
     "fp"      => z -> inv_gft_fp(z; tol = TOL, maxit = 5000),
     "broyden" => z -> inv_gft_broyden(z; tol = TOL),
-    "newton"  => z -> inv_gft_newton(z; tol = TOL, warm = 1),
+    "newton"  => z -> inv_gft_newton(z; tol = TOL, warm = 1, safeguard = false),
+    "newtonsafe" => z -> inv_gft(z; tol = TOL, exact_hess = true),
     "fpn"     => z -> inv_gft(z; tol = TOL),
 )
 
@@ -98,24 +99,24 @@ function main()
                 "time_med,time_q25,time_q75,fails,total,one_minus_lmin")
 
     for n in (100, 300), rho in (0.5, 0.9, 0.99)
-        meths = n <= 100 ? ["fp", "broyden", "newton", "fpn"] :
+        meths = n <= 100 ? ["fp", "broyden", "newton", "newtonsafe", "fpn"] :
                            ["fp", "broyden", "fpn"]
         run_case(io, "toeplitz_rho$(rho)_n$(n)",
                  [gft(corr_toeplitz(n, rho))], meths; reps_time = 5)
     end
     run_case(io, "wishart_n100",
              [gft(corr_wishart(rng, 100)) for _ in 1:REPS],
-             ["fp", "broyden", "newton", "fpn"])
+             ["fp", "broyden", "newton", "newtonsafe", "fpn"])
     run_case(io, "factor_n100",
              [gft(corr_factor(rng, 100, 0.85, 0.999)) for _ in 1:REPS],
-             ["fp", "broyden", "newton", "fpn"])
+             ["fp", "broyden", "newton", "newtonsafe", "fpn"])
     d = 50 * 49 ÷ 2
     zs_sd4 = Vector{Vector{Float64}}()          # kept for the tolerance block
     for s in (2.0, 4.0)
         zs = [s * randn(rng, d) for _ in 1:REPS]
         s == 4.0 && (zs_sd4 = zs)
         run_case(io, "z_sd$(s)_n50", zs,
-                 ["fp", "broyden", "newton", "fpn"])
+                 ["fp", "broyden", "newton", "newtonsafe", "fpn"])
     end
     run_case(io, "factor_n800",
              [gft(corr_factor(rng, 800, 0.8, 0.995)) for _ in 1:REPS_BIG],
@@ -196,7 +197,7 @@ function main()
         for tol in (1e-6, 1e-13)
             for (m, sv) in (("fp", z -> inv_gft_fp(z; tol = tol, maxit = 5000)),
                             ("broyden", z -> inv_gft_broyden(z; tol = tol)),
-                            ("newton", z -> inv_gft_newton(z; tol = tol, warm = 1)),
+                            ("newton", z -> inv_gft_newton(z; tol = tol, warm = 1, safeguard = false)),
                             ("fpn", z -> inv_gft(z; tol = tol)))
                 es = Int[]; fail = 0
                 for z in zs

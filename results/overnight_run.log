@@ -1,0 +1,16 @@
+[2026-09-18T11:59:04.291] toeplitz_rho0.5_n100 (1 draws)
+[2026-09-18T11:59:04.721] toeplitz_rho0.9_n100 (1 draws)
+[2026-09-18T11:59:05.270] toeplitz_rho0.99_n100 (1 draws)
+[2026-09-18T11:59:06.109] toeplitz_rho0.5_n300 (1 draws)
+[2026-09-18T11:59:09.464] toeplitz_rho0.9_n300 (1 draws)
+[2026-09-18T11:59:14.054] toeplitz_rho0.99_n300 (1 draws)
+[2026-09-18T11:59:21.501] wishart_n100 (1000 draws)
+[2026-09-18T12:25:29.486] factor_n100 (1000 draws)
+[2026-09-18T12:44:36.210] z_sd2.0_n50 (1000 draws)
+[2026-09-18T12:48:53.378] z_sd4.0_n50 (1000 draws)
+[2026-09-18T12:57:36.365] factor_n800 (500 draws)
+[2026-09-18T15:32:36.547] rate validation (1000 designs)
+[2026-09-18T15:33:06.758] histories
+[2026-09-18T15:33:07.216] warm starts
+[2026-09-18T15:34:11.469] tolerance sensitivity
+[2026-09-18T15:45:10.663] done. Results in ./results/

@@ -44,7 +44,7 @@ end
 const METHODS = Dict(
     "fp"      => z -> inv_gft_fp(z; tol = TOL, maxit = 5000),
     "broyden" => z -> inv_gft_broyden(z; tol = TOL),
-    "newton"  => z -> inv_gft_newton(z; tol = TOL, warm = 1),
+    "newton"  => z -> inv_gft_newton(z; tol = TOL, warm = 1, safeguard = false),
     "fpn"    => z -> inv_gft(z; tol = TOL),
 )
 

@@ -1,0 +1,27 @@
+== tolerance sensitivity, z~N(0,16I), same 1000 inputs ==
+tol=1.0e-6 fp                median eighs= 440.5  median time=   79.2ms fails=0/1000
+tol=1.0e-6 broyden           median eighs=  35.0  median time=    7.1ms fails=978/1000
+tol=1.0e-6 newton            median eighs=  21.0  median time=    7.3ms fails=0/1000
+tol=1.0e-6 fpn               median eighs=  21.0  median time=    4.8ms fails=0/1000
+tol=1.0e-13 fp               median eighs=1007.5  median time=  180.5ms fails=0/1000
+tol=1.0e-13 broyden          median eighs=  52.0  median time=   10.6ms fails=978/1000
+tol=1.0e-13 newton           median eighs=  24.0  median time=    8.5ms fails=94/1000
+tol=1.0e-13 fpn              median eighs=  23.0  median time=    5.8ms fails=0/1000
+== Broyden, same initial fixed-point phase, same 1000 inputs ==
+sd2 broyden-published        median eighs=  38.0  median time=    7.5ms fails=56/1000
+sd2 broyden-globalized       median eighs=  29.0  median time=    5.8ms fails=3/1000
+sd2 broyden-fpn              median eighs=  17.0  median time=    4.4ms fails=0/1000
+sd4 broyden-published        median eighs=  52.0  median time=   10.1ms fails=978/1000
+sd4 broyden-globalized       median eighs=  43.0  median time=    8.5ms fails=167/1000
+sd4 broyden-fpn              median eighs=  23.0  median time=    5.8ms fails=0/1000
+== full Newton with GFT-FP+N's safeguards, same 1000 inputs ==
+sd2 newton-safeguarded       median eighs=  13.0  median time=    5.0ms fails=0/1000
+sd4 newton-safeguarded       median eighs=  18.0  median time=    6.2ms fails=0/1000
+== Anderson(5) and L-BFGS(10), same 1000 inputs ==
+sd2 anderson5                median eighs=  92.0  median time=   17.1ms fails=0/1000
+sd2 lbfgs10                  median eighs=  88.0  median time=   16.1ms fails=0/1000
+sd2 lbfgs10glob              median eighs=  59.0  median time=   10.8ms fails=0/1000
+sd4 anderson5                median eighs= 157.0  median time=   29.2ms fails=0/1000
+sd4 lbfgs10                  median eighs= 153.0  median time=   28.1ms fails=0/1000
+sd4 lbfgs10glob              median eighs=  88.0  median time=   16.1ms fails=0/1000
+done: results/final.csv

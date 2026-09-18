@@ -1,0 +1,35 @@
+draw  6: eighs=  31 hv=  77 time=  6.84s err=9.7e-14 conv=true
+   hist tail: 2.43e-13 2.24e-13 3.32e-13 2.09e-13 1.49e-13 2.60e-13 1.03e-13 2.95e-13 6.61e-13 3.10e-13 2.43e-13 9.73e-14
+draw 72: eighs=  23 hv=  60 time=  5.24s err=6.0e-14 conv=true
+   hist tail: 1.08e-13 1.40e-13 2.42e-13 1.90e-13 2.17e-13 1.80e-13 1.24e-13 4.40e-13 2.10e-13 1.56e-13 1.35e-13 6.02e-14
+draw 116: eighs=  21 hv=  70 time=  5.40s err=6.6e-14 conv=true
+   hist tail: 4.36e-10 2.70e-13 1.20e-13 1.66e-13 1.01e-13 1.02e-13 1.44e-13 1.13e-13 1.56e-13 1.93e-13 1.45e-13 6.62e-14
+draw 163: eighs=  45 hv=  65 time=  7.97s err=8.4e-14 conv=true
+   hist tail: 4.73e-13 3.97e-13 2.59e-13 1.83e-12 1.76e-12 3.91e-13 4.74e-13 8.97e-13 7.74e-13 3.69e-13 1.36e-13 8.41e-14
+draw 177: eighs=  31 hv=  58 time=  6.03s err=8.4e-14 conv=true
+   hist tail: 2.61e-13 1.86e-13 2.13e-13 2.15e-13 7.07e-13 4.39e-13 1.52e-13 3.33e-13 6.87e-13 3.99e-13 3.32e-13 8.37e-14
+draw 212: eighs=  27 hv=  57 time=  5.50s err=9.8e-14 conv=true
+   hist tail: 1.98e-13 4.07e-13 1.08e-13 1.17e-13 1.46e-13 7.76e-13 8.60e-13 2.98e-13 5.19e-13 1.12e-13 1.22e-13 9.75e-14
+draw 227: eighs=  59 hv=  56 time=  9.23s err=9.1e-14 conv=true
+   hist tail: 1.08e-12 4.55e-13 2.85e-13 7.87e-13 1.30e-12 3.13e-13 2.52e-13 4.22e-13 3.88e-13 2.10e-13 4.30e-13 9.10e-14
+draw 235: eighs=  43 hv=  60 time=  7.60s err=1.0e-13 conv=true
+   hist tail: 2.94e-12 1.34e-12 8.42e-13 7.78e-13 2.84e-13 2.02e-13 7.67e-13 2.12e-12 3.09e-13 2.72e-12 6.13e-13 1.00e-13
+draw 242: eighs=  24 hv=  58 time=  5.19s err=1.0e-13 conv=true
+   hist tail: 2.32e-13 2.74e-13 2.78e-13 1.32e-13 1.99e-13 1.85e-13 1.60e-13 1.42e-13 1.70e-13 1.66e-13 1.98e-13 9.97e-14
+draw 271: eighs=  38 hv=  95 time=  8.44s err=9.5e-14 conv=true
+   hist tail: 3.22e-13 8.38e-13 5.29e-13 8.28e-13 4.94e-13 1.78e-13 2.40e-13 2.87e-13 3.37e-13 3.91e-13 2.90e-13 9.45e-14
+draw 414: eighs=  30 hv=  58 time=  6.02s err=7.1e-14 conv=true
+   hist tail: 1.89e-13 5.06e-13 2.55e-13 2.06e-13 1.61e-13 4.97e-13 1.46e-13 2.06e-13 2.88e-13 1.21e-13 5.45e-13 7.13e-14
+draw 429: eighs=  59 hv=  56 time=  9.38s err=8.7e-14 conv=true
+   hist tail: 5.32e-13 9.85e-13 3.69e-13 1.70e-12 6.58e-13 1.76e-13 6.96e-13 2.27e-12 2.30e-12 1.30e-12 1.10e-12 8.65e-14
+draw 460: eighs=  23 hv=  78 time=  6.04s err=8.7e-14 conv=true
+   hist tail: 4.01e-13 1.64e-13 1.70e-13 5.18e-13 1.06e-12 3.71e-13 7.36e-13 2.00e-13 1.67e-13 1.92e-13 1.29e-13 8.71e-14
+draw 469: eighs=  44 hv=  75 time=  8.31s err=9.2e-14 conv=true
+   hist tail: 1.93e-13 3.21e-13 1.16e-13 4.32e-13 2.06e-13 1.45e-13 2.37e-13 1.14e-13 1.26e-13 1.85e-13 2.39e-13 9.22e-14
+draw 474: eighs= 501 hv=  56 time= 61.37s err=8.0e-13 conv=false
+   hist tail: 1.00e-12 5.83e-13 3.61e-13 1.60e-12 1.50e-12 6.05e-13 4.01e-13 7.82e-13 7.85e-13 3.72e-13 3.70e-13 7.98e-13
+draw 476: eighs=  46 hv=  67 time=  8.27s err=7.3e-14 conv=true
+   hist tail: 2.02e-13 1.89e-13 2.53e-13 4.82e-13 2.22e-13 1.35e-13 2.38e-13 2.98e-13 1.34e-13 2.04e-13 1.95e-13 7.26e-14
+draw 493: eighs= 145 hv=  57 time= 19.87s err=9.2e-14 conv=true
+   hist tail: 3.52e-13 4.13e-13 1.60e-13 4.38e-13 3.52e-13 7.20e-13 1.63e-13 2.90e-13 4.69e-13 3.18e-13 2.79e-13 9.21e-14
+n=800 recheck: median eighs=11 [11,12] max=501 fails=1/500

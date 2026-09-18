@@ -220,12 +220,24 @@ inv_gft_broyden <- function(z, x0 = NULL, tol = 1e-13, maxit = 500,
 
 # Full Newton with the exact O(n^4) Hessian recomputed at every iteration,
 # Armijo backtracking on f, optional fixed-point warm start.
+#
+# safeguard = FALSE reproduces the published comparator of Chen, Fei and
+# Yu (2025) with only the Armijo line search added, which is the variant
+# benchmarked in the paper; it can stagnate at the rounding floor and
+# return converged = FALSE.  safeguard = TRUE (the default) additionally
+# applies the two rounding-floor safeguards of inv_gft: the full Newton
+# step is taken untested once the predicted decrease falls below the
+# resolution of f, and a persistent lack of progress hands the iteration
+# to the contractive fixed point.
 inv_gft_newton <- function(z, x0 = NULL, tol = 1e-13, maxit = 500,
-                           warm = 1) {
+                           warm = 1, safeguard = TRUE) {
     p <- .prep(z, x0)
     A0 <- p$A0; n <- p$n; x <- p$x
     hist <- numeric(maxit + 1); nh <- 0
     eighs <- 0
+    best_err <- Inf
+    stall <- 0
+    fp_finish <- FALSE
     F <- .eigx(A0, x); lam <- F$values; Q <- F$vectors; eighs <- eighs + 1
     for (i in seq_len(warm)) {
         x <- x - .logdiagexp(lam, Q)
@@ -241,6 +253,26 @@ inv_gft_newton <- function(z, x0 = NULL, tol = 1e-13, maxit = 500,
         if (err < tol)
             return(.inv_result(x, .expA(lam, Q), k, eighs, 0, err, TRUE,
                                hist[seq_len(nh)]))
+        if (safeguard) {
+            # near the rounding floor the Newton direction is computed
+            # from noise-dominated gradients and the Armijo test is
+            # decided by cancellation in f; if progress stalls there,
+            # finish with fixed-point steps, whose update x <- x - ell
+            # remains contractive
+            if (err < 0.5 * best_err) {
+                best_err <- err
+                stall <- 0
+            } else if (err < 1e-9) {
+                stall <- stall + 1
+            }
+            if (fp_finish || stall >= 3) {
+                fp_finish <- TRUE
+                x <- x - ell
+                F <- .eigx(A0, x); lam <- F$values; Q <- F$vectors
+                eighs <- eighs + 1
+                next
+            }
+        }
         step <- NULL
         if (all(is.finite(g))) {
             H <- .hessian(lam, Q)
@@ -259,6 +291,15 @@ inv_gft_newton <- function(z, x0 = NULL, tol = 1e-13, maxit = 500,
         }
         f0 <- .fval(lam, x)
         gTs <- sum(g * step)
+        if (safeguard && -gTs <= 1e-12 * (1 + abs(f0))) {
+            # predicted decrease below the float resolution of f: the
+            # Armijo test carries no information here, so take the full
+            # Newton step untested (we are in the Newton basin)
+            x <- x + step
+            F <- .eigx(A0, x); lam <- F$values; Q <- F$vectors
+            eighs <- eighs + 1
+            next
+        }
         tstep <- 1
         ok <- FALSE
         lam_t <- lam; Q_t <- Q

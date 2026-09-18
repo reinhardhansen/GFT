@@ -8,7 +8,7 @@ using GFT
 using LinearAlgebra, Random, Printf
 
 BLAS.set_num_threads(1)
-const TOL = 1e-13
+const TOL = isempty(ARGS) ? 1e-13 : parse(Float64, ARGS[1])   # julia recheck_n800.jl 1e-12
 
 # --- replay the RNG stream of overnight.jl up to the n=800 block
 rng = MersenneTwister(18900217)
@@ -37,8 +37,19 @@ for i in 1:500
     if r.eighs > 20 || !r.converged
         @printf("draw %2d: eighs=%4d hv=%4d time=%6.2fs err=%.1e conv=%s\n",
                 i, r.eighs, r.hvs, t, r.err, r.converged)
+        println("   hist tail: ", join((@sprintf("%.2e", e) for e in r.hist[max(1, end - 11):end]), " "))
+    end
+    if !r.converged
+        # save the loadings so the draw can be diagnosed offline
+        open("results/n800_fail_tol$(TOL)_draw$(i).csv", "w") do f
+            println(f, "b"); foreach(v -> println(f, v), b)
+        end
+        open("results/n800_fail_tol$(TOL)_draw$(i)_hist.csv", "w") do f
+            println(f, "iter,err"); foreach(((k, e),) -> println(f, k, ",", e), enumerate(r.hist))
+        end
     end
 end
 using Statistics
-@printf("n=800 recheck: median eighs=%.0f [%.0f,%.0f] max=%d fails=%d/500\n",
-        median(es), quantile(es, .25), quantile(es, .75), worst, fails)
+open("results/n800_tol$(TOL).csv", "w") do f; println(f, "eighs"); foreach(e -> println(f, e), es); end
+@printf("n=800 recheck (tol=%.0e): median eighs=%.0f [%.0f,%.0f] max=%d fails=%d/500\n",
+        TOL, median(es), quantile(es, .25), quantile(es, .75), worst, fails)

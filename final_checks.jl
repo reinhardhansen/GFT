@@ -32,28 +32,41 @@ let C = 0.9 .^ abs.((1:10) .- (1:10)')
     z = gft(C)
     inv_gft(z); inv_gft_broyden(z); inv_gft_broyden(z; globalized = true)
     inv_gft_fp(z); inv_gft_newton(z)
+    inv_gft_anderson(z); inv_gft_lbfgs(z); inv_gft_lbfgs(z; globalized = true)
 end
 
-function summarize(tag, results)
-    es = [r.eighs for r in results if r.converged]
-    fails = count(r -> !r.converged, results)
+# run solver on every input, timing each solve (wall seconds)
+function timed(sv, zs)
+    out = Vector{Any}(undef, length(zs)); ts = zeros(length(zs))
+    for (i, z) in enumerate(zs)
+        t0 = time_ns(); out[i] = sv(z); ts[i] = (time_ns() - t0) / 1e9
+    end
+    return out, ts
+end
+
+function summarize(tag, results, ts)
+    ok = [r.converged for r in results]
+    es = [r.eighs for r in results[ok]]
+    fails = count(!, ok)
     med = isempty(es) ? NaN : median(es)
-    @printf("%-28s median eighs=%6.1f fails=%d/%d\n", tag, med, fails,
-            length(results))
-    return (med, fails, length(results))
+    tmed = isempty(es) ? NaN : median(ts[ok])
+    @printf("%-28s median eighs=%6.1f  median time=%7.1fms fails=%d/%d\n",
+            tag, med, 1e3 * tmed, fails, length(results))
+    return (med, fails, length(results), tmed)
 end
 
 open("results/final.csv", "w") do io
-    println(io, "experiment,method,eighs_med,fails,total")
+    println(io, "experiment,method,eighs_med,fails,total,time_med")
 
     println("== tolerance sensitivity, z~N(0,16I), same 1000 inputs ==")
     for tol in (1e-6, 1e-13)
         for (m, sv) in (("fp", z -> inv_gft_fp(z; tol = tol, maxit = 5000)),
                         ("broyden", z -> inv_gft_broyden(z; tol = tol)),
-                        ("newton", z -> inv_gft_newton(z; tol = tol, warm = 1)),
+                        ("newton", z -> inv_gft_newton(z; tol = tol, warm = 1, safeguard = false)),
                         ("fpn", z -> inv_gft(z; tol = tol)))
-            med, fails, tot = summarize("tol=$tol $m", [sv(z) for z in zs4])
-            println(io, "tol_$tol,$m,$med,$fails,$tot")
+            res, ts = timed(sv, zs4)
+            med, fails, tot, tmed = summarize("tol=$tol $m", res, ts)
+            println(io, "tol_$tol,$m,$med,$fails,$tot,$tmed")
         end
     end
 
@@ -63,8 +76,9 @@ open("results/final.csv", "w") do io
                         ("globalized", z -> inv_gft_broyden(z; tol = TOL,
                                                             globalized = true)),
                         ("fpn", z -> inv_gft(z; tol = TOL)))
-            med, fails, tot = summarize("$tag broyden-$m", [sv(z) for z in zs])
-            println(io, "broyden_$tag,$m,$med,$fails,$tot")
+            res, ts = timed(sv, zs)
+            med, fails, tot, tmed = summarize("$tag broyden-$m", res, ts)
+            println(io, "broyden_$tag,$m,$med,$fails,$tot,$tmed")
         end
     end
 
@@ -79,9 +93,29 @@ open("results/final.csv", "w") do io
         @assert maximum(abs, r1.x - r2.x) < 1e-10
     end
     for (tag, zs) in (("sd2", zs2), ("sd4", zs4))
-        med, fails, tot = summarize("$tag newton-safeguarded",
-            [inv_gft(z; tol = TOL, exact_hess = true) for z in zs])
-        println(io, "newtonsafe_$tag,exact_hess,$med,$fails,$tot")
+        res, ts = timed(z -> inv_gft(z; tol = TOL, exact_hess = true), zs)
+        med, fails, tot, tmed = summarize("$tag newton-safeguarded", res, ts)
+        println(io, "newtonsafe_$tag,exact_hess,$med,$fails,$tot,$tmed")
+    end
+    # --- standard Jacobian-free tools as comparators: Anderson
+    # acceleration of the fixed point (memory 5) and L-BFGS on f
+    # (memory 10), the latter from x = 0 and after GFT-FP+N's initial
+    # fixed-point phase. Same 1000 inputs per design.
+    println("== Anderson(5) and L-BFGS(10), same 1000 inputs ==")
+    let z = gft(0.9 .^ abs.((1:10) .- (1:10)'))   # sanity vs GFT-FP+N
+        x = inv_gft(z; tol = 1e-14).x
+        @assert maximum(abs, inv_gft_anderson(z; tol = 1e-14).x - x) < 1e-9
+        @assert maximum(abs, inv_gft_lbfgs(z; tol = 1e-14).x - x) < 1e-9
+    end
+    for (tag, zs) in (("sd2", zs2), ("sd4", zs4))
+        for (m, sv) in (("anderson5", z -> inv_gft_anderson(z; tol = TOL, m = 5)),
+                        ("lbfgs10", z -> inv_gft_lbfgs(z; tol = TOL, m = 10)),
+                        ("lbfgs10glob", z -> inv_gft_lbfgs(z; tol = TOL, m = 10,
+                                                            globalized = true)))
+            res, ts = timed(sv, zs)
+            med, fails, tot, tmed = summarize("$tag $m", res, ts)
+            println(io, "tools_$tag,$m,$med,$fails,$tot,$tmed")
+        end
     end
 end
 println("done: results/final.csv")

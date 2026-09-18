@@ -249,10 +249,10 @@ end
 Full Newton with the exact O(n^4) Hessian recomputed at every iteration,
 Armijo backtracking on f, optional fixed-point warm start.
 
-safeguard = false reproduces the published comparator of Chen, Fei and Yu
-(2025) with only the Armijo line search added, which is the variant
-benchmarked in the paper; it can stagnate at the rounding floor and
-return converged = false.  safeguard = true (the default) additionally
+safeguard = false is Newton in the form of Chen, Fei and Yu (2025), one
+fixed-point step then exact Newton steps, with an Armijo line search
+added (the paper's "Newton with Armijo backtracking"); it can stagnate
+at the rounding floor and return converged = false.  safeguard = true (the default) additionally
 applies the two rounding-floor safeguards of inv_gft.
 """
 function inv_gft_newton(z::AbstractVector; x0 = nothing, tol = 1e-13,

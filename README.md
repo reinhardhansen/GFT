@@ -30,9 +30,9 @@ as `GFT` (`install.packages("GFT")`); its source lives in [`r/`](r/)
   explicit Hessian, the paper's full-Newton column), and the comparison
   solvers `inv_gft_fp` (Archakov–Hansen fixed point), `inv_gft_broyden`
   (Chen–Fei–Yu; `globalized = true` adds the same initial fixed-point
-  phase as `inv_gft`), `inv_gft_newton` (Newton as published by
-  Chen–Fei–Yu with `safeguard = false`; the default adds the terminal
-  safeguards of `inv_gft`), `inv_gft_anderson` (Anderson acceleration of
+  phase as `inv_gft`), `inv_gft_newton` (Newton in the form of
+  Chen–Fei–Yu plus an Armijo line search with `safeguard = false`; the
+  default adds the terminal safeguards of `inv_gft`), `inv_gft_anderson` (Anderson acceleration of
   the fixed point) and `inv_gft_lbfgs` (limited-memory BFGS on the
   objective). All return an `InvResult` with fields
   `x, C, iters, eighs, hvs, err, converged, hist`.
@@ -103,7 +103,7 @@ Python suite, so medians on random designs may differ slightly.
   produced with the full-Newton comparator capped at 100 iterations;
   all other methods used the documented caps.
 
-Known sensitivity: the iteration count of Newton's method as published
+Known sensitivity: the iteration count of Newton with Armijo backtracking
 (`inv_gft_newton` with `safeguard = false`) on near-singular
 deterministic designs (e.g. Toeplitz rho=0.99) is unstable to
 roundoff-level perturbations — accept/reject decisions of its Armijo

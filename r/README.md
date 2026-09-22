@@ -6,9 +6,11 @@ correlation matrices in base R.
 The GFT maps a non-singular n x n correlation matrix C to the
 unrestricted vector gamma = vecl(log C) in R^d, d = n(n-1)/2, and is a
 bijection onto R^d (Archakov and Hansen, 2021, Econometrica). The
-inverse is computed by GFT-FP+N (Archakov and Hansen, 2026): a
-fixed-point phase in the log domain followed by a matrix-free inexact
-Newton phase with preconditioned conjugate gradients.
+inverse is computed by GFT-FP+N (Archakov and Hansen, 2026,
+arXiv:2609.19028): matrix-free inexact Newton steps for the log-diagonal
+residual, solved by preconditioned conjugate gradients, with fixed-point
+safeguards that guarantee global convergence. Version 1.2.0 of the
+package matches release v1.2.0 of the Julia implementation.
 
 ```r
 library(GFT)
@@ -18,10 +20,13 @@ r <- inv_gft(z)      # inverse: R^10 -> correlation matrix
 max(abs(r$C - C))    # ~1e-15
 ```
 
-Solvers: `inv_gft` (GFT-FP+N, recommended), `inv_gft_fp` (fixed point),
-`inv_gft_broyden` (Chen, Fei and Yu, 2025), `inv_gft_newton` (full
-Newton). All report eigendecomposition counts and convergence
-diagnostics.
+Solvers: `inv_gft` (GFT-FP+N, recommended; with the optional certified
+quadrature preconditioner), `inv_gft_path` (sequential inversion with
+warm starts and the tangent predictor `gft_predict`), and the comparison
+solvers `inv_gft_fp` (fixed point), `inv_gft_broyden` (Chen, Fei and
+Yu, 2025), `inv_gft_newton` (full Newton), `inv_gft_anderson` (Anderson
+acceleration, plain or guarded), and `inv_gft_lbfgs` (limited-memory
+BFGS). All report eigendecomposition counts and convergence diagnostics.
 
 ## Installation
 

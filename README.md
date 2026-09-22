@@ -22,6 +22,9 @@ the package environment themselves (`julia -t 1 runtests.jl` etc.).
 An R port with the same API (base R only, no dependencies) is on CRAN
 as `GFT` (`install.packages("GFT")`); its source lives in [`r/`](r/)
 (`remotes::install_github("reinhardhansen/GFT", subdir = "r")`).
+R package 1.2.0 ports this release function for function, including
+the variants, the quadrature preconditioner, `inv_gft_path` and
+`gft_predict`, `inv_gft_anderson`, and `inv_gft_lbfgs`.
 
 ## Files
 

@@ -22,7 +22,7 @@ readz <- function(path)
 meths <- list(
     fp      = function(z) inv_gft_fp(z, tol = TOL, maxit = 5000),
     broyden = function(z) inv_gft_broyden(z, tol = TOL),
-    newton  = function(z) inv_gft_newton(z, tol = TOL, warm = 1),
+    newton  = function(z) inv_gft_newton(z, tol = TOL, warm = 1, safeguard = FALSE),
     fpn     = function(z) inv_gft(z, tol = TOL)
 )
 

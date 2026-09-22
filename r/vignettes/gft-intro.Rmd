@@ -49,8 +49,10 @@ where $A[x;z]$ is the symmetric matrix with off-diagonal elements $z$ and
 diagonal $x$: at the minimizer, $C = e^{A[x^*;z]}$ is the unique
 correlation matrix with $\mathrm{vecl}(\log C) = z$. The recommended
 solver is `inv_gft()`, the GFT-FP+N algorithm of Archakov and Hansen
-(2026): a globally convergent fixed-point phase in the log domain,
-followed by a matrix-free inexact Newton phase.
+(2026): matrix-free inexact Newton steps for the residual
+$\log\mathrm{diag}(e^{A})$, solved by preconditioned conjugate gradients,
+with fixed-point safeguards that make it globally convergent. It
+typically needs about ten eigendecompositions at any $n$.
 
 ```{r}
 r <- inv_gft(z)

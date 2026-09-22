@@ -1,3 +1,37 @@
+# GFT 1.2.0
+
+The version number now matches the Julia reference implementation
+(github.com/reinhardhansen/GFT, tag v1.2.0), which this release ports
+function for function.
+
+## Changes to `inv_gft()`
+
+* `inv_gft()` now implements the revised GFT-FP+N of the paper (Archakov
+  and Hansen, 2026, arXiv:2609.19028): Newton steps for the log-diagonal
+  residual (`H delta = -D ell` instead of `H delta = -g`), forcing
+  tolerance `min(1/2, ||ell||)` (locally quadratic), exact normalization
+  of every evaluated point along the vector of ones, no initial
+  fixed-point phase, an adaptive initial Armijo step, and a descent test
+  before the untested-step rule.  Median eigendecomposition counts fall
+  by about 40% on ill-conditioned inputs and by two or three on
+  well-conditioned ones; solutions are unchanged.
+* The previous algorithm remains available through the new arguments
+  `residual`, `forcing`, `normalize`, `phase` and `adaptive`
+  (`residual = "gradient", forcing = "sqrt", normalize = FALSE,
+  phase = TRUE, adaptive = FALSE`).
+* New argument `preconditioner`: `"quadrature"` or `"auto"` replaces the
+  diagonal preconditioner of the conjugate-gradient solve by a
+  quadrature model of the Hessian with a certified condition-number
+  bound; `"auto"` applies the paper's selection rule.
+
+## New functions
+
+* `inv_gft_anderson()`: Anderson acceleration of the fixed point, with a
+  `guarded` option that makes it globally convergent.
+* `inv_gft_lbfgs()`: limited-memory BFGS on the objective.
+* `inv_gft_path()` and `gft_predict()`: sequential inversion with warm
+  starts and a tangent predictor.
+
 # GFT 1.0.1
 
 ## Bug fixes

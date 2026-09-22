@@ -57,8 +57,8 @@ inv_gft_newton(z, x0 = NULL, tol = 1e-13, maxit = 500, warm = 1,
 }
 \references{
   Archakov, I. and Hansen, P. R. (2026).
-  A variational approach to the generalized Fisher transformation of
-  correlation matrices.  Working paper.
+  Fast inversion of the generalized Fisher transformation of
+  correlation matrices.  Working paper, arXiv:2609.19028.
 }
 \seealso{\code{\link{inv_gft}}.}
 \examples{

@@ -162,3 +162,132 @@ test_that("warm start and print method", {
     expect_output(print(r0), "Inverse GFT result")
     expect_output(print(r0), "converged")
 })
+
+# ---- 1.2.0: revised Newton step, quadrature preconditioner, comparators
+
+test_that("normalization and shift identities", {
+    set.seed(5)
+    n <- 12
+    z <- rnorm(n * (n - 1) / 2)
+    x <- rnorm(n)
+    A <- unvecl(z); diag(A) <- x
+    e <- eigen(A, symmetric = TRUE)
+    ell <- GFT:::.logdiagexp(e$values, e$vectors)
+    nz <- GFT:::.normalize(x, e$values, ell)
+    # after the shift tr exp(A) = n, eigenvectors unchanged, ell shifted
+    expect_lt(abs(sum(exp(nz$lam)) - n), 1e-10 * n)
+    An <- A; diag(An) <- nz$x
+    en <- eigen(An, symmetric = TRUE)
+    expect_lt(max(abs(en$values - nz$lam)), 1e-10)
+    expect_lt(max(abs(GFT:::.logdiagexp(en$values, en$vectors) - nz$ell)), 1e-10)
+    # shifting x along 1 by s scales exp(A) by exp(-s)
+    E0 <- GFT:::.expA(e$values, e$vectors)
+    expect_lt(max(abs(GFT:::.expA(en$values, en$vectors) - exp(-nz$s) * E0)),
+              1e-10 * max(abs(E0)))
+})
+
+test_that("algorithm variants agree", {
+    set.seed(6)
+    n <- 20
+    z <- 2 * rnorm(n * (n - 1) / 2)
+    ref <- inv_gft(z)
+    expect_true(ref$converged)
+    variants <- list(
+        list(residual = "gradient", forcing = "sqrt", normalize = FALSE,
+             phase = TRUE, adaptive = FALSE),           # 1.0.x algorithm
+        list(residual = "gradient", forcing = "quad"),
+        list(residual = "log", forcing = "sqrt"),
+        list(normalize = FALSE),
+        list(phase = TRUE),
+        list(adaptive = FALSE),
+        list(exact_hess = TRUE),
+        list(preconditioner = "quadrature"),
+        list(preconditioner = "auto"))
+    for (kw in variants) {
+        r <- do.call(inv_gft, c(list(z = z), kw))
+        expect_true(r$converged)
+        expect_lt(max(abs(r$x - ref$x)), 1e-10)
+    }
+})
+
+test_that("quadrature preconditioner: certificate and rule", {
+    set.seed(7)
+    n <- 40
+    b <- 0.8 + 0.195 * runif(n)
+    C <- outer(b, b); diag(C) <- 1
+    z <- gft(C)
+    r <- inv_gft(z)
+    A <- unvecl(z); diag(A) <- r$x
+    e <- eigen(A, symmetric = TRUE)
+    w <- e$values - max(e$values); Q <- e$vectors   # scaled by exp(-max)
+    Delta <- max(w) - min(w)
+    H <- GFT:::.hessian(w, Q)
+    for (rr in 1:4) {
+        qp <- GFT:::.quadrature_precond(w, Q, rfixed = rr)
+        expect_false(is.null(qp$R))
+        M <- crossprod(qp$R)
+        ev <- Re(eigen(solve(M, H), only.values = TRUE)$values)
+        expect_gte(min(ev), 1 - 1e-6)                            # M_r <= H
+        expect_lte(max(ev), exp(GFT:::.logphi(rr, Delta)) + 1e-6) # H <= phi M_r
+    }
+    # the rule chooses the smallest order that certifies kappa <= 2
+    r1 <- GFT:::.choose_order(Delta, kappa = 2, rmax = 40)
+    expect_true(r1 >= 1)
+    expect_lte(exp(GFT:::.logphi(r1, Delta)), 2 + 1e-12)
+    if (r1 > 1) expect_gt(exp(GFT:::.logphi(r1 - 1, Delta)), 2)
+    # the quadrature solve uses no more products than the diagonal one
+    rq <- inv_gft(z, preconditioner = "quadrature")
+    expect_true(rq$converged)
+    expect_lte(rq$hvs, r$hvs)
+})
+
+test_that("Anderson acceleration, plain and guarded", {
+    set.seed(8)
+    z <- 2 * rnorm(45)                         # n = 10
+    ref <- inv_gft(z)
+    for (g in c(FALSE, TRUE)) {
+        r <- inv_gft_anderson(z, guarded = g)
+        expect_true(r$converged)
+        expect_lt(max(abs(r$x - ref$x)), 1e-9)
+        expect_lt(r$eighs, inv_gft_fp(z)$eighs)
+    }
+})
+
+test_that("L-BFGS", {
+    set.seed(9)
+    z <- 2 * rnorm(45)
+    ref <- inv_gft(z)
+    for (g in c(FALSE, TRUE)) {
+        r <- inv_gft_lbfgs(z, globalized = g)
+        expect_true(r$converged)
+        expect_lt(max(abs(r$x - ref$x)), 1e-9)
+    }
+})
+
+test_that("tangent predictor and inv_gft_path", {
+    set.seed(10)
+    n <- 30
+    b <- 0.85 + 0.149 * runif(n)
+    C <- outer(b, b); diag(C) <- 1
+    z0 <- gft(C)
+    d <- length(z0)
+    # prediction error is O(h^2): quartering the step cuts it by ~16
+    dz <- rnorm(d) / sqrt(d)
+    r0 <- GFT:::.inv_gft_args(z0)
+    err <- sapply(c(0.04, 0.01), function(h) {
+        z1 <- z0 + h * dz
+        p <- gft_predict(z0, r0$result$x, r0$lam, r0$Q, z1, rtol = 1e-10)
+        max(abs(p$x - inv_gft(z1)$x))
+    })
+    expect_gt(err[1] / err[2], 8)
+    # a path: every solve converges, predictor starts no worse than warm
+    zs <- lapply(0:6, function(k) z0 + 0.01 * k * dz)
+    outp <- inv_gft_path(zs)
+    outw <- inv_gft_path(zs, predictor = FALSE)
+    expect_true(all(sapply(outp, `[[`, "converged")))
+    expect_true(all(sapply(outw, `[[`, "converged")))
+    expect_equal(attr(outp, "nbdz"), length(zs) - 1)
+    expect_lte(sum(sapply(outp, `[[`, "eighs")), sum(sapply(outw, `[[`, "eighs")))
+    for (k in seq_along(zs))
+        expect_lt(max(abs(outp[[k]]$x - inv_gft(zs[[k]])$x)), 1e-10)
+})

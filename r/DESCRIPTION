@@ -1,7 +1,7 @@
 Package: GFT
 Type: Package
 Title: Generalized Fisher Transformation of Correlation Matrices
-Version: 1.0.1
+Version: 1.2.0
 Authors@R: c(
     person("Ilya", "Archakov", role = "aut"),
     person("Peter Reinhard", "Hansen", email = "hansen@unc.edu",
@@ -11,11 +11,14 @@ Description: Forward and inverse generalized Fisher transformation (GFT)
     definite correlation matrices one-to-one onto the Euclidean space of
     dimension n(n-1)/2, see Archakov and Hansen (2021)
     <doi:10.3982/ECTA16910>. The inverse is computed from a variational
-    characterization by the GFT-FP+N algorithm: a fixed-point phase in
-    the log domain followed by a matrix-free inexact Newton phase with
-    preconditioned conjugate gradients. Reference implementations of the
-    plain fixed point, Broyden's method, and full Newton are included.
-    Uses base R only.
+    characterization by the GFT-FP+N algorithm: matrix-free inexact
+    Newton steps for the log-diagonal residual, solved by preconditioned
+    conjugate gradients, with fixed-point safeguards that guarantee
+    global convergence. Sequential inversion with a tangent predictor,
+    a certified quadrature preconditioner, and comparison solvers (the
+    plain fixed point, Broyden's method, full Newton, Anderson
+    acceleration, and limited-memory BFGS) are included. Uses base R
+    only.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends: R (>= 3.5.0)

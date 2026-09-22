@@ -22,27 +22,36 @@
   where \eqn{A[x;z]} is symmetric with off-diagonal elements \eqn{z} and
   diagonal \eqn{x}, by the following solvers:
   \describe{
-    \item{\code{\link{inv_gft}}}{GFT-FP+N (recommended): fixed-point
-      phase in the log domain, then matrix-free inexact Newton via
-      preconditioned conjugate gradients.}
+    \item{\code{\link{inv_gft}}}{GFT-FP+N (recommended): matrix-free
+      inexact Newton steps for the log-diagonal residual via
+      preconditioned conjugate gradients, with fixed-point safeguards
+      and exact normalization; optional certified quadrature
+      preconditioner.}
+    \item{\code{\link{inv_gft_path}}}{Sequential inversion with warm
+      starts and the tangent predictor \code{\link{gft_predict}}.}
     \item{\code{\link{inv_gft_fp}}}{The Archakov-Hansen fixed point.}
     \item{\code{\link{inv_gft_broyden}}}{Broyden's method as in Chen,
       Fei and Yu (2025).}
     \item{\code{\link{inv_gft_newton}}}{Full Newton with the exact
       \eqn{O(n^4)} Hessian.}
+    \item{\code{\link{inv_gft_anderson}}}{Anderson acceleration of the
+      fixed point, plain or guarded.}
+    \item{\code{\link{inv_gft_lbfgs}}}{Limited-memory BFGS on the
+      objective.}
   }
-  The implementation is a line-faithful port of the Julia reference
-  implementation by the same authors and uses base R only.
+  The implementation is a line-faithful port of version 1.2.0 of the
+  Julia reference implementation by the same authors
+  (\url{https://github.com/reinhardhansen/GFT}) and uses base R only.
 }
 \references{
   Archakov, I. and Hansen, P. R. (2021).
   A new parametrization of correlation matrices.
-  \emph{Econometrica}, \bold{89}(4), 1699--1715.
+  \emph{Econometrica}, \bold{89}, 1699--1715.
   \doi{10.3982/ECTA16910}
 
   Archakov, I. and Hansen, P. R. (2026).
-  A variational approach to the generalized Fisher transformation of
-  correlation matrices.  Working paper.
+  Fast inversion of the generalized Fisher transformation of
+  correlation matrices.  Working paper, arXiv:2609.19028.
 
   Chen, H., Fei, Y. and Yu, J. (2025).
   Multivariate stochastic volatility models based on generalized Fisher

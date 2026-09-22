@@ -14,11 +14,17 @@ function for function.
 
 - local: macOS 26.6.2 (aarch64-apple-darwin23), R 4.6.1:
   0 errors, 0 warnings, 1 NOTE
-- win-builder, R-devel: (fill in)
-- win-builder, R-release: (fill in)
+- win-builder, R-release (R 4.6.1, 2026-06-24 ucrt):
+  0 errors, 0 warnings, 1 NOTE
+- win-builder, R-devel (2026-09-21 r90579 ucrt):
+  0 errors, 0 warnings, 1 NOTE
 
 ## NOTEs
 
+- "Possibly misspelled words in DESCRIPTION: preconditioner".  This is
+  the standard term in numerical linear algebra for a matrix that
+  approximates the coefficient matrix of a linear system to accelerate
+  an iterative solver; the package implements one.
 - Local only: "Skipping checking HTML validation: 'tidy' doesn't look
   like recent enough HTML Tidy" (the HTML Tidy shipped with macOS).
 

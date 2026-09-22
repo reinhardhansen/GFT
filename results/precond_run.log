@@ -1,0 +1,53 @@
+[2026-09-20T15:59:08.057] Table 1 designs (replayed draws)
+toeplitz_rho0.5_n100     diagonal   E=  5.0 P=  15.0 nodes= NaN builds= 0.0      5.50ms (setup   0.00) fails=0 cholfail=0
+toeplitz_rho0.5_n100     quadrature E=  5.0 P=  15.0 nodes= 1.0 builds= 4.0      6.03ms (setup   0.43) fails=0 cholfail=0
+toeplitz_rho0.5_n100     rule       E=  5.0 P=  15.0 nodes= NaN builds= 0.0      5.47ms (setup   0.00) fails=0 cholfail=0
+toeplitz_rho0.9_n100     diagonal   E=  6.0 P=  30.0 nodes= NaN builds= 0.0      7.67ms (setup   0.00) fails=0 cholfail=0
+toeplitz_rho0.9_n100     quadrature E=  5.0 P=   8.0 nodes= 2.0 builds= 4.0      5.35ms (setup   0.53) fails=0 cholfail=0
+toeplitz_rho0.9_n100     rule       E=  6.0 P=  30.0 nodes= NaN builds= 0.0      7.69ms (setup   0.01) fails=0 cholfail=0
+toeplitz_rho0.99_n100    diagonal   E=  6.0 P=  29.0 nodes= NaN builds= 0.0      7.60ms (setup   0.00) fails=0 cholfail=0
+toeplitz_rho0.99_n100    quadrature E=  6.0 P=  20.0 nodes= 2.0 builds= 5.0      7.62ms (setup   0.81) fails=0 cholfail=0
+toeplitz_rho0.99_n100    rule       E=  6.0 P=  29.0 nodes= NaN builds= 0.0      7.74ms (setup   0.01) fails=0 cholfail=0
+toeplitz_rho0.99_n300    diagonal   E=  6.0 P=  28.0 nodes= NaN builds= 0.0    108.66ms (setup   0.00) fails=0 cholfail=0
+toeplitz_rho0.99_n300    quadrature E=  6.0 P=  21.0 nodes= 2.0 builds= 5.0    107.16ms (setup  13.44) fails=0 cholfail=0
+toeplitz_rho0.99_n300    rule       E=  6.0 P=  21.0 nodes= 2.0 builds= 5.0    106.45ms (setup  13.02) fails=0 cholfail=0
+wishart_n100             diagonal   E=  5.0 P=  15.0 nodes= NaN builds= 0.0      5.65ms (setup   0.00) fails=0 cholfail=0
+wishart_n100             quadrature E=  4.0 P=   7.0 nodes= 1.0 builds= 3.0      4.25ms (setup   0.24) fails=0 cholfail=0
+wishart_n100             rule       E=  5.0 P=  15.0 nodes= NaN builds= 0.0      5.59ms (setup   0.00) fails=0 cholfail=0
+factor_n100              diagonal   E=  7.0 P=  34.0 nodes= NaN builds= 0.0     10.99ms (setup   0.00) fails=0 cholfail=0
+factor_n100              quadrature E=  6.0 P=  16.0 nodes= 2.0 builds= 5.0      8.91ms (setup   0.66) fails=0 cholfail=0
+factor_n100              rule       E=  7.0 P=  34.0 nodes= NaN builds= 0.0     11.01ms (setup   0.01) fails=0 cholfail=0
+z_sd2.0_n50              diagonal   E= 10.0 P=  68.0 nodes= NaN builds= 0.0      3.24ms (setup   0.00) fails=0 cholfail=0
+z_sd2.0_n50              quadrature E= 10.0 P=  17.0 nodes= 5.0 builds= 7.0      2.69ms (setup   0.43) fails=0 cholfail=0
+z_sd2.0_n50              rule       E= 10.0 P=  68.0 nodes= NaN builds= 0.0      3.26ms (setup   0.02) fails=0 cholfail=0
+z_sd4.0_n50              diagonal   E= 14.0 P=  93.0 nodes= NaN builds= 0.0      4.28ms (setup   0.00) fails=0 cholfail=0
+z_sd4.0_n50              quadrature E= 12.0 P=  19.0 nodes= 8.0 builds= 9.0      3.68ms (setup   0.83) fails=0 cholfail=0
+z_sd4.0_n50              rule       E= 14.0 P=  93.0 nodes= NaN builds= 0.0      4.31ms (setup   0.03) fails=0 cholfail=0
+[2026-09-20T16:00:21.933] larger designs (seed 20260920)
+factor08_n200            diagonal   E=  7.0 P=  34.0 nodes= NaN builds= 0.0     54.27ms (setup   0.00) fails=0 cholfail=0
+factor08_n200            quadrature E=  6.0 P=  16.0 nodes= 2.0 builds= 5.0     42.71ms (setup   4.15) fails=0 cholfail=0
+factor08_n200            rule       E=  6.0 P=  16.0 nodes= 2.0 builds= 5.0     42.63ms (setup   4.14) fails=0 cholfail=0
+factor08_n400            diagonal   E=  7.0 P=  32.0 nodes= NaN builds= 0.0    324.23ms (setup   0.00) fails=0 cholfail=0
+factor08_n400            quadrature E=  6.0 P=  16.0 nodes= 2.0 builds= 5.0    248.71ms (setup  29.44) fails=0 cholfail=0
+factor08_n400            rule       E=  6.0 P=  16.0 nodes= 2.0 builds= 5.0    248.95ms (setup  29.40) fails=0 cholfail=0
+wishart_n400             diagonal   E=  4.0 P=   7.0 nodes= NaN builds= 0.0     99.42ms (setup   0.00) fails=0 cholfail=0
+wishart_n400             quadrature E=  4.0 P=   7.0 nodes= 1.0 builds= 3.0    110.05ms (setup  10.15) fails=0 cholfail=0
+wishart_n400             rule       E=  4.0 P=   7.0 nodes= NaN builds= 0.0     99.33ms (setup   0.00) fails=0 cholfail=0
+toeplitz_rho0.5_n800     diagonal   E=  5.0 P=  15.0 nodes= NaN builds= 0.0   1059.46ms (setup   0.00) fails=0 cholfail=0
+toeplitz_rho0.5_n800     quadrature E=  5.0 P=  15.0 nodes= 1.0 builds= 4.0   1160.07ms (setup 104.49) fails=0 cholfail=0
+toeplitz_rho0.5_n800     rule       E=  5.0 P=  15.0 nodes= NaN builds= 0.0   1054.80ms (setup   0.01) fails=0 cholfail=0
+toeplitz_rho0.9_n800     diagonal   E=  6.0 P=  31.0 nodes= NaN builds= 0.0   1783.76ms (setup   0.00) fails=0 cholfail=0
+toeplitz_rho0.9_n800     quadrature E=  5.0 P=   8.0 nodes= 2.0 builds= 4.0    962.78ms (setup 181.81) fails=0 cholfail=0
+toeplitz_rho0.9_n800     rule       E=  5.0 P=   8.0 nodes= 2.0 builds= 4.0    962.60ms (setup 181.70) fails=0 cholfail=0
+toeplitz_rho0.99_n800    diagonal   E=  6.0 P=  30.0 nodes= NaN builds= 0.0   1747.43ms (setup   0.00) fails=0 cholfail=0
+toeplitz_rho0.99_n800    quadrature E=  6.0 P=  21.0 nodes= 2.0 builds= 5.0   1641.11ms (setup 250.80) fails=0 cholfail=0
+toeplitz_rho0.99_n800    rule       E=  6.0 P=  21.0 nodes= 2.0 builds= 5.0   1646.19ms (setup 250.74) fails=0 cholfail=0
+[2026-09-20T16:07:02.659] n = 800 (replayed draws)
+factor_n800              diagonal   E=  8.0 P=  35.0 nodes= NaN builds= 0.0   2304.67ms (setup   0.00) fails=0 cholfail=0
+factor_n800              quadrature E=  6.0 P=  16.0 nodes= 2.0 builds= 5.0   1576.71ms (setup 220.95) fails=0 cholfail=0
+factor_n800              rule       E=  6.0 P=  16.0 nodes= 2.0 builds= 5.0   1599.26ms (setup 224.76) fails=0 cholfail=0
+[2026-09-20T17:09:15.587] sequential inversion with the predictor
+  n = 100 done
+  n = 400 done
+  n = 800 done
+[2026-09-20T17:11:58.554] done. Results in ./results/

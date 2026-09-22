@@ -1,0 +1,131 @@
+[2026-09-19T21:17:59.378] generating inputs
+[2026-09-19T21:18:10.666] ablation
+z_sd2.0_n50              A      E= 17.0 [q90  19.0, max  23] P= 64.0     4.37ms fails=0
+z_sd4.0_n50              A      E= 23.0 [q90  26.0, max  51] P= 87.0     5.90ms fails=0
+z_sd2.0_n50              B      E= 15.0 [q90  16.0, max  21] P= 71.0     4.02ms fails=0
+z_sd4.0_n50              B      E= 21.0 [q90  24.0, max  48] P= 88.0     5.41ms fails=0
+z_sd2.0_n50              C      E= 15.0 [q90  17.0, max  20] P= 61.0     3.97ms fails=0
+z_sd4.0_n50              C      E= 21.0 [q90  24.0, max  36] P= 86.0     5.35ms fails=0
+z_sd2.0_n50              D      E= 13.0 [q90  14.0, max  17] P= 63.0     3.54ms fails=0
+z_sd4.0_n50              D      E= 18.0 [q90  22.0, max  33] P= 84.0     4.90ms fails=0
+z_sd2.0_n50              AN     E= 16.0 [q90  18.0, max  21] P= 57.0     4.17ms fails=0
+z_sd4.0_n50              AN     E= 22.0 [q90  26.0, max  36] P= 78.0     5.58ms fails=0
+z_sd2.0_n50              BN     E= 14.0 [q90  15.0, max  18] P= 58.0     3.73ms fails=0
+z_sd4.0_n50              BN     E= 20.0 [q90  24.0, max  33] P= 88.0     5.20ms fails=0
+z_sd2.0_n50              CN     E= 15.0 [q90  17.0, max  19] P= 59.0     3.91ms fails=0
+z_sd4.0_n50              CN     E= 21.0 [q90  25.0, max  35] P= 80.0     5.39ms fails=0
+z_sd2.0_n50              DN     E= 13.0 [q90  14.1, max  17] P= 66.0     3.61ms fails=0
+z_sd4.0_n50              DN     E= 19.0 [q90  23.0, max  33] P= 79.0     4.93ms fails=0
+z_sd2.0_n50              AN0    E= 19.0 [q90  24.0, max  41] P= 62.0     4.87ms fails=0
+z_sd4.0_n50              AN0    E= 30.0 [q90  42.0, max  63] P= 90.0     7.37ms fails=0
+z_sd2.0_n50              BN0    E= 17.0 [q90  22.0, max  38] P= 69.0     4.52ms fails=0
+z_sd4.0_n50              BN0    E= 28.0 [q90  39.0, max  60] P= 95.0     6.90ms fails=0
+z_sd2.0_n50              CN0    E= 13.0 [q90  14.0, max  20] P= 63.0     3.58ms fails=0
+z_sd4.0_n50              CN0    E= 17.0 [q90  22.0, max  31] P= 92.0     4.94ms fails=0
+z_sd2.0_n50              DN0    E= 10.0 [q90  12.0, max  18] P= 68.0     3.18ms fails=0
+z_sd4.0_n50              DN0    E= 15.0 [q90  19.0, max  28] P= 95.0     4.56ms fails=0
+z_sd2.0_n50              CN0t   E= 13.0 [q90  14.0, max  19] P= 63.0     3.59ms fails=0
+z_sd4.0_n50              CN0t   E= 16.0 [q90  19.0, max  29] P= 92.0     4.71ms fails=0
+z_sd2.0_n50              DN0t   E= 10.0 [q90  12.0, max  16] P= 68.0     3.20ms fails=0
+z_sd4.0_n50              DN0t   E= 14.0 [q90  17.0, max  26] P= 93.0     4.25ms fails=0
+toeplitz_rho0.5_n100     A      E=  7.0 [q90   7.0, max   7] P= 12.0     6.81ms fails=0
+toeplitz_rho0.9_n100     A      E=  8.0 [q90   8.0, max   8] P= 19.0     8.80ms fails=0
+toeplitz_rho0.99_n100    A      E=  9.0 [q90   9.0, max   9] P= 25.0     9.58ms fails=0
+toeplitz_rho0.99_n300    A      E=  9.0 [q90   9.0, max   9] P= 26.0   127.27ms fails=0
+wishart_n100             A      E=  7.0 [q90   7.0, max   8] P= 12.0     6.92ms fails=0
+factor_n100              A      E= 10.0 [q90  11.0, max  13] P= 27.0    14.08ms fails=0
+toeplitz_rho0.5_n100     B      E=  6.0 [q90   6.0, max   6] P= 16.0     6.36ms fails=0
+toeplitz_rho0.9_n100     B      E=  6.0 [q90   6.0, max   6] P= 23.0     6.91ms fails=0
+toeplitz_rho0.99_n100    B      E=  7.0 [q90   7.0, max   7] P= 38.0     9.16ms fails=0
+toeplitz_rho0.99_n300    B      E=  7.0 [q90   7.0, max   7] P= 44.0   150.78ms fails=0
+wishart_n100             B      E=  6.0 [q90   6.0, max   7] P= 13.0     6.22ms fails=0
+factor_n100              B      E=  9.0 [q90   9.0, max  11] P= 38.0    13.50ms fails=0
+toeplitz_rho0.5_n100     C      E=  6.0 [q90   6.0, max   6] P= 11.0     5.88ms fails=0
+toeplitz_rho0.9_n100     C      E=  8.0 [q90   8.0, max   8] P= 25.0     8.70ms fails=0
+toeplitz_rho0.99_n100    C      E=  9.0 [q90   9.0, max   9] P= 30.0    10.01ms fails=0
+toeplitz_rho0.99_n300    C      E=  9.0 [q90   9.0, max   9] P= 37.0   151.27ms fails=0
+wishart_n100             C      E=  6.0 [q90   6.0, max   6] P= 11.0     6.01ms fails=0
+factor_n100              C      E= 10.0 [q90  10.0, max  12] P= 33.0    14.10ms fails=0
+toeplitz_rho0.5_n100     D      E=  5.0 [q90   5.0, max   5] P= 15.0     5.43ms fails=0
+toeplitz_rho0.9_n100     D      E=  6.0 [q90   6.0, max   6] P= 22.0     6.85ms fails=0
+toeplitz_rho0.99_n100    D      E=  7.0 [q90   7.0, max   7] P= 35.0     8.88ms fails=0
+toeplitz_rho0.99_n300    D      E=  6.0 [q90   6.0, max   6] P= 26.0   103.72ms fails=0
+wishart_n100             D      E=  5.0 [q90   5.0, max   5] P= 10.0     5.07ms fails=0
+factor_n100              D      E=  8.0 [q90   9.0, max  10] P= 24.0    11.06ms fails=0
+toeplitz_rho0.5_n100     DN     E=  5.0 [q90   5.0, max   5] P= 15.0     5.44ms fails=0
+toeplitz_rho0.9_n100     DN     E=  6.0 [q90   6.0, max   6] P= 30.0     7.65ms fails=0
+toeplitz_rho0.99_n100    DN     E=  6.0 [q90   6.0, max   6] P= 29.0     7.59ms fails=0
+toeplitz_rho0.99_n300    DN     E=  6.0 [q90   6.0, max   6] P= 28.0   108.52ms fails=0
+wishart_n100             DN     E=  5.0 [q90   5.0, max   7] P= 15.0     5.54ms fails=0
+factor_n100              DN     E=  8.0 [q90   8.0, max  10] P= 34.0    11.86ms fails=0
+toeplitz_rho0.5_n100     DN0    E=  5.0 [q90   5.0, max   5] P= 15.0     5.47ms fails=0
+toeplitz_rho0.9_n100     DN0    E=  6.0 [q90   6.0, max   6] P= 30.0     7.67ms fails=0
+toeplitz_rho0.99_n100    DN0    E=  6.0 [q90   6.0, max   6] P= 29.0     7.58ms fails=0
+toeplitz_rho0.99_n300    DN0    E=  6.0 [q90   6.0, max   6] P= 28.0   108.67ms fails=0
+wishart_n100             DN0    E=  5.0 [q90   5.0, max   7] P= 15.0     5.54ms fails=0
+factor_n100              DN0    E=  7.0 [q90   7.0, max   9] P= 34.0    11.00ms fails=0
+toeplitz_rho0.5_n100     DN0t   E=  5.0 [q90   5.0, max   5] P= 15.0     5.46ms fails=0
+toeplitz_rho0.9_n100     DN0t   E=  6.0 [q90   6.0, max   6] P= 30.0     7.67ms fails=0
+toeplitz_rho0.99_n100    DN0t   E=  6.0 [q90   6.0, max   6] P= 29.0     7.60ms fails=0
+toeplitz_rho0.99_n300    DN0t   E=  6.0 [q90   6.0, max   6] P= 28.0   108.73ms fails=0
+wishart_n100             DN0t   E=  5.0 [q90   5.0, max   7] P= 15.0     5.55ms fails=0
+factor_n100              DN0t   E=  7.0 [q90   7.0, max   9] P= 34.0    11.03ms fails=0
+factor_n800              A      E= 11.0 [q90  14.1, max  22] P= 35.0  2719.03ms fails=0
+factor_n800              B      E=  9.0 [q90  13.1, max  22] P= 38.0  2610.01ms fails=0
+factor_n800              D      E=  9.0 [q90  12.1, max  38] P= 39.0  2644.63ms fails=0
+factor_n800              DN0    E=  8.0 [q90  12.0, max  23] P= 35.0  2351.04ms fails=0
+factor_n800              DN0t   E=  8.0 [q90  12.0, max  23] P= 35.0  2357.00ms fails=0
+[2026-09-19T21:36:06.601] Anderson memory sweep
+ERROR: LoadError: SingularException: matrix is singular; factorization failed. Zero pivot found at index 48
+Stacktrace:
+  [1] checknonsingular
+    @ ~/.julia/juliaup/julia-1.13.0+0.aarch64.apple.darwin14/Julia-1.13.app/Contents/Resources/julia/share/julia/stdlib/v1.13/LinearAlgebra/src/factorization.jl:69 [inlined]
+  [2] _check_lu_success
+    @ ~/.julia/juliaup/julia-1.13.0+0.aarch64.apple.darwin14/Julia-1.13.app/Contents/Resources/julia/share/julia/stdlib/v1.13/LinearAlgebra/src/lu.jl:84 [inlined]
+  [3] #lu!#180
+    @ ~/.julia/juliaup/julia-1.13.0+0.aarch64.apple.darwin14/Julia-1.13.app/Contents/Resources/julia/share/julia/stdlib/v1.13/LinearAlgebra/src/lu.jl:92 [inlined]
+  [4] lu!
+    @ ~/.julia/juliaup/julia-1.13.0+0.aarch64.apple.darwin14/Julia-1.13.app/Contents/Resources/julia/share/julia/stdlib/v1.13/LinearAlgebra/src/lu.jl:90 [inlined]
+  [5] lu!
+    @ ~/.julia/juliaup/julia-1.13.0+0.aarch64.apple.darwin14/Julia-1.13.app/Contents/Resources/julia/share/julia/stdlib/v1.13/LinearAlgebra/src/lu.jl:89 [inlined]
+  [6] _lu
+    @ ~/.julia/juliaup/julia-1.13.0+0.aarch64.apple.darwin14/Julia-1.13.app/Contents/Resources/julia/share/julia/stdlib/v1.13/LinearAlgebra/src/lu.jl:405 [inlined]
+  [7] lu(::Matrix{Float64}; kwargs::@Kwargs{})
+    @ LinearAlgebra ~/.julia/juliaup/julia-1.13.0+0.aarch64.apple.darwin14/Julia-1.13.app/Contents/Resources/julia/share/julia/stdlib/v1.13/LinearAlgebra/src/lu.jl:399
+  [8] lu
+    @ ~/.julia/juliaup/julia-1.13.0+0.aarch64.apple.darwin14/Julia-1.13.app/Contents/Resources/julia/share/julia/stdlib/v1.13/LinearAlgebra/src/lu.jl:399 [inlined]
+  [9] \(A::Matrix{Float64}, B::Vector{Float64})
+    @ LinearAlgebra ~/.julia/juliaup/julia-1.13.0+0.aarch64.apple.darwin14/Julia-1.13.app/Contents/Resources/julia/share/julia/stdlib/v1.13/LinearAlgebra/src/generic.jl:1241
+ [10] inv_gft_anderson(z::Vector{Float64}; x0::Nothing, tol::Float64, maxit::Int64, m::Int64, guarded::Bool, theta::Float64)
+    @ GFT ~/My Drive/Academic/Articles/GFT/AlgoGFT/julia/src/GFT.jl:654
+ [11] kwcall(::@NamedTuple{tol::Float64, m::Int64, guarded::Bool}, ::typeof(inv_gft_anderson), z::Vector{Float64})
+    @ GFT ~/My Drive/Academic/Articles/GFT/AlgoGFT/julia/src/GFT.jl:625
+ [12] (::var"#23#24")(io::IOStream)
+    @ Main ~/My Drive/Academic/Articles/GFT/AlgoGFT/julia/ablation.jl:133
+ [13] open(::var"#23#24", ::String, ::Vararg{String}; kwargs::@Kwargs{})
+    @ Base ./io.jl:429
+ [14] open(::Function, ::String, ::String)
+    @ Base ./io.jl:426
+ [15] top-level scope
+    @ ~/My Drive/Academic/Articles/GFT/AlgoGFT/julia/ablation.jl:126
+ [16] include(mod::Module, _path::String)
+    @ Base ./Base.jl:309
+ [17] exec_options(opts::Base.JLOptions)
+    @ Base ./client.jl:344
+ [18] _start()
+    @ Base ./client.jl:577
+in expression starting at /Users/phansen/My Drive/Academic/Articles/GFT/AlgoGFT/julia/ablation.jl:126
+z_sd2.0_n50  anderson5    E=  92.0 [q90  109.0, max  132]   17.20ms fails=0
+z_sd2.0_n50  anderson5g   E=  92.0 [q90  109.0, max  132]   17.23ms fails=0
+z_sd2.0_n50  anderson10   E=  72.0 [q90   80.0, max  103]   13.63ms fails=0
+z_sd2.0_n50  anderson10g  E=  72.0 [q90   80.0, max   96]   13.67ms fails=0
+z_sd2.0_n50  anderson20   E=  63.0 [q90   68.0, max   78]   12.49ms fails=0
+z_sd2.0_n50  anderson20g  E=  63.0 [q90   68.0, max   79]   12.37ms fails=0
+z_sd2.0_n50  anderson50   E=  65.0 [q90   75.1, max  173]   14.51ms fails=0
+z_sd2.0_n50  anderson50g  E=  63.0 [q90   73.0, max  129]   13.97ms fails=0
+z_sd4.0_n50  anderson5    E= 157.0 [q90  188.1, max  256]   29.06ms fails=0
+z_sd4.0_n50  anderson5g   E= 158.0 [q90  191.0, max  243]   29.42ms fails=0
+z_sd4.0_n50  anderson10   E= 112.0 [q90  130.0, max  192]   21.35ms fails=0
+z_sd4.0_n50  anderson10g  E= 112.0 [q90  128.1, max  174]   21.29ms fails=0
+z_sd4.0_n50  anderson20   E=  97.0 [q90  106.0, max  203]   19.26ms fails=2
+z_sd4.0_n50  anderson20g  E=  95.0 [q90  103.0, max  118]   18.77ms fails=0

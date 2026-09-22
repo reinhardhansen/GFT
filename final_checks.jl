@@ -32,7 +32,8 @@ let C = 0.9 .^ abs.((1:10) .- (1:10)')
     z = gft(C)
     inv_gft(z); inv_gft_broyden(z); inv_gft_broyden(z; globalized = true)
     inv_gft_fp(z); inv_gft_newton(z)
-    inv_gft_anderson(z); inv_gft_lbfgs(z); inv_gft_lbfgs(z; globalized = true)
+    inv_gft_anderson(z); inv_gft_anderson(z; guarded = true)
+    inv_gft_lbfgs(z); inv_gft_lbfgs(z; globalized = true)
 end
 
 # run solver on every input, timing each solve (wall seconds)
@@ -109,6 +110,7 @@ open("results/final.csv", "w") do io
     end
     for (tag, zs) in (("sd2", zs2), ("sd4", zs4))
         for (m, sv) in (("anderson5", z -> inv_gft_anderson(z; tol = TOL, m = 5)),
+                        ("anderson5g", z -> inv_gft_anderson(z; tol = TOL, m = 5, guarded = true)),
                         ("lbfgs10", z -> inv_gft_lbfgs(z; tol = TOL, m = 10)),
                         ("lbfgs10glob", z -> inv_gft_lbfgs(z; tol = TOL, m = 10,
                                                             globalized = true)))

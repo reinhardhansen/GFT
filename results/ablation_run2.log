@@ -1,0 +1,23 @@
+[2026-09-19T22:38:26.626] generating inputs
+[2026-09-19T22:38:37.957] Anderson memory sweep
+z_sd2.0_n50  anderson5    E=  93.0 [q90  109.0, max  133]   17.89ms fails=0
+z_sd2.0_n50  anderson5g   E=  93.0 [q90  109.0, max  133]   17.82ms fails=0
+z_sd2.0_n50  anderson10   E=  72.0 [q90   80.0, max  104]   14.49ms fails=0
+z_sd2.0_n50  anderson10g  E=  72.0 [q90   80.0, max   97]   14.55ms fails=0
+z_sd2.0_n50  anderson20   E=  63.0 [q90   68.0, max   79]   14.39ms fails=0
+z_sd2.0_n50  anderson20g  E=  63.0 [q90   67.0, max   76]   14.21ms fails=0
+z_sd2.0_n50  anderson50   E=  60.0 [q90   62.1, max  109]   17.46ms fails=0
+z_sd2.0_n50  anderson50g  E=  60.0 [q90   62.0, max  109]   16.92ms fails=0
+z_sd4.0_n50  anderson5    E= 156.5 [q90  189.0, max  241]   30.20ms fails=0
+z_sd4.0_n50  anderson5g   E= 158.0 [q90  191.0, max  243]   30.40ms fails=0
+z_sd4.0_n50  anderson10   E= 112.0 [q90  130.0, max  182]   22.64ms fails=0
+z_sd4.0_n50  anderson10g  E= 112.0 [q90  128.0, max  173]   22.49ms fails=0
+z_sd4.0_n50  anderson20   E=  97.0 [q90  106.0, max  209]   22.70ms fails=2
+z_sd4.0_n50  anderson20g  E=  95.0 [q90  103.0, max  118]   21.49ms fails=0
+z_sd4.0_n50  anderson50   E=  76.0 [q90   97.0, max  225]   24.45ms fails=9
+z_sd4.0_n50  anderson50g  E=  83.0 [q90  107.1, max  293]   21.83ms fails=0
+[2026-09-19T22:44:30.517] sequential inversion with the tangent predictor
+  sd = 0.0005 done
+  sd = 0.002 done
+  sd = 0.008 done
+[2026-09-19T22:45:43.870] done. Results in ./results/

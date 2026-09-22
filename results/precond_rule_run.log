@@ -1,0 +1,16 @@
+[2026-09-20T18:38:38.391] selection rule, designs below n = 800
+toeplitz_rho0.5_n100     rule       E=  5.0 P=  15.0 nodes= NaN builds= 0.0      5.50ms (setup   0.00) fails=0 cholfail=0
+toeplitz_rho0.9_n100     rule       E=  5.0 P=   8.0 nodes= 2.0 builds= 4.0      5.35ms (setup   0.54) fails=0 cholfail=0
+toeplitz_rho0.99_n100    rule       E=  6.0 P=  20.0 nodes= 2.0 builds= 5.0      7.50ms (setup   0.66) fails=0 cholfail=0
+toeplitz_rho0.99_n300    rule       E=  6.0 P=  21.0 nodes= 2.0 builds= 5.0    107.21ms (setup  13.22) fails=0 cholfail=0
+wishart_n100             rule       E=  5.0 P=  15.0 nodes= NaN builds= 0.0      5.65ms (setup   0.00) fails=0 cholfail=0
+factor_n100              rule       E=  6.0 P=  16.0 nodes= 2.0 builds= 5.0      8.92ms (setup   0.65) fails=0 cholfail=0
+z_sd2.0_n50              rule       E= 10.0 P=  17.0 nodes= 5.0 builds= 7.0      2.68ms (setup   0.42) fails=0 cholfail=0
+z_sd4.0_n50              rule       E= 12.0 P=  19.0 nodes= 8.0 builds= 9.0      3.67ms (setup   0.82) fails=0 cholfail=0
+factor08_n200            rule       E=  6.0 P=  16.0 nodes= 2.0 builds= 5.0     42.68ms (setup   4.14) fails=0 cholfail=0
+factor08_n400            rule       E=  6.0 P=  16.0 nodes= 2.0 builds= 5.0    249.26ms (setup  29.45) fails=0 cholfail=0
+wishart_n400             rule       E=  4.0 P=   7.0 nodes= NaN builds= 0.0     99.37ms (setup   0.00) fails=0 cholfail=0
+toeplitz_rho0.5_n800     rule       E=  5.0 P=  15.0 nodes= NaN builds= 0.0   1057.00ms (setup   0.01) fails=0 cholfail=0
+toeplitz_rho0.9_n800     rule       E=  5.0 P=   8.0 nodes= 2.0 builds= 4.0    964.06ms (setup 216.84) fails=0 cholfail=0
+toeplitz_rho0.99_n800    rule       E=  6.0 P=  21.0 nodes= 2.0 builds= 5.0   1645.12ms (setup 230.73) fails=0 cholfail=0
+[2026-09-20T18:41:12.165] done. Results in ./results/

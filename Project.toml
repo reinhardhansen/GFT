@@ -1,7 +1,7 @@
 name = "GFT"
 uuid = "f51a6337-f2c1-49a2-8c78-c0313aea39d8"
 authors = ["Ilya Archakov", "Peter Reinhard Hansen"]
-version = "1.1.0"
+version = "1.2.0"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"

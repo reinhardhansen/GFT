@@ -27,7 +27,8 @@ module GFT
 using LinearAlgebra
 
 export gft, inv_gft, inv_gft_fp, inv_gft_broyden, inv_gft_newton,
-       inv_gft_anderson, inv_gft_lbfgs, vecl, unvecl, InvResult
+       inv_gft_anderson, inv_gft_lbfgs, inv_gft_path, gft_predict,
+       vecl, unvecl, InvResult
 
 # ------------------------------------------------------------------ types
 
@@ -347,54 +348,192 @@ function inv_gft_newton(z::AbstractVector; x0 = nothing, tol = 1e-13,
     return InvResult(x, expA(lam, Q), maxit, eighs, 0, err, false, hist)
 end
 
-"""
-    inv_gft(z; x0=nothing, tol=1e-13, maxit=200, delta=1.0)
+# ------------------------------------------------ quadrature preconditioner
 
-GFT-FP+N (recommended). Phase 1: fixed-point steps in the log domain
-while `||diag(exp(A))-1||_inf > delta` (robust to overflow). Phase 2:
-inexact Newton; the system `H step = -g` is solved matrix-free by
-conjugate gradients with Jacobi preconditioner `diag(exp(A))`, exact
-Hessian-vector products (two matrix multiplications each) and forcing
-tolerance `eta = min(1/2, sqrt(||g||))` (Eisenstat and Walker, 1996;
-superlinear of order 3/2). Armijo backtracking on f, with the full
-Newton step taken untested once the predicted decrease is below the
-floating-point resolution of f, and a fixed-point step substituted if
-the line search fails.
+"Gauss-Legendre nodes and weights on [0, 1] (Golub-Welsch)."
+function gauss_legendre01(r::Int)
+    r == 1 && return [0.5], [1.0]
+    b = [k / sqrt(4k^2 - 1) for k in 1:r-1]
+    F = eigen(SymTridiagonal(zeros(r), b))
+    t = (F.values .+ 1) ./ 2
+    a = F.vectors[1, :] .^ 2
+    return t, a
+end
+
 """
-function inv_gft(z::AbstractVector; x0 = nothing, tol = 1e-13,
-                 maxit = 500, delta = 1.0, exact_hess = false)
+log phi_r(u): the ratio of the divided difference of exp to its r-point
+Gauss-Legendre approximation at eigenvalue gap u,
+phi_r(u) = [sinh(u/2)/(u/2)] / sum_j a_j cosh((t_j - 1/2) u) >= 1.
+"""
+function logphi(r::Int, u::Float64)
+    t, a = gauss_legendre01(r)
+    h = abs(u) / 2
+    ls = h > 1e-8 ? h + log(-expm1(-2h)) - log(2h) : 0.0
+    cs = similar(t)
+    for j in eachindex(t)                       # log(a_j cosh((t_j - 1/2) u))
+        cj = abs(t[j] - 0.5) * abs(u)
+        cs[j] = log(a[j]) + cj + log1p(exp(-2cj)) - log(2.0)
+    end
+    m = maximum(cs)
+    return ls - (m + log(sum(exp, cs .- m)))
+end
+
+"""
+Smallest Gauss-Legendre order r <= rmax with certified condition number
+phi_r(spread) <= kappa for the preconditioned system (phi_r increases in
+the spread); returns 0 if none.
+"""
+function choose_order(spread::Float64, kappa::Float64, rmax::Int)
+    for r in 1:rmax
+        logphi(r, spread) <= log(kappa) && return r
+    end
+    return 0
+end
+
+"""
+    quadrature_precond(w, Q; kappa=2.0, rmin=1, rmax=40, nmin=0)
+
+Cholesky factor of M_r = sum_j a_j e^{t_j A} o e^{(1-t_j) A} for the
+symmetric matrix with eigenvalues `w` (already shifted so that
+max(w) = 0, matching the e^{-c} scaling of the products) and
+eigenvectors `Q`, with r the smallest Gauss-Legendre order that
+certifies M_r <= H <= kappa M_r from the spectral spread. Returns
+`(factor, r)`; `factor === nothing` and `r == 0` means the diagonal
+preconditioner should be used (smallest certifying order outside
+[rmin, rmax], or n < nmin), and `factor === nothing` with `r > 0` a
+failed factorization. `rfixed > 0` prescribes the order.
+"""
+function quadrature_precond(w::Vector{Float64}, Q::Matrix{Float64};
+                            kappa = 2.0, rmin = 1, rmax = 40, nmin = 0,
+                            rfixed = 0)
+    n = length(w)
+    spread = maximum(w) - minimum(w)
+    if rfixed > 0                               # prescribed order (tests)
+        r = rfixed
+    else
+        r = spread > 1000.0 ? 0 : choose_order(spread, Float64(kappa), rmax)
+        (r == 0 || r < rmin || n < nmin) && return nothing, 0
+    end
+    t, a = gauss_legendre01(r)
+    M = zeros(n, n)
+    half = (r + 1) ÷ 2
+    for j in 1:half
+        k = r + 1 - j                           # paired node 1 - t_j
+        Ej = (Q .* exp.(t[j] .* w)') * Q'
+        if j == k
+            M .+= a[j] .* (Ej .* Ej)
+        else
+            Ek = (Q .* exp.(t[k] .* w)') * Q'
+            M .+= (a[j] + a[k]) .* (Ej .* Ek)
+        end
+    end
+    F = cholesky(Symmetric((M + M') ./ 2); check = false)
+    return (issuccess(F) ? F : nothing), r
+end
+
+"""
+    inv_gft(z; x0=nothing, tol=1e-13, maxit=500, exact_hess=false,
+            residual=:log, forcing=:quad, normalize=true, phase=false,
+            adaptive=true, delta=1.0)
+
+GFT-FP+N (recommended). Every evaluated point is normalized by the exact
+minimization of f along the vector of ones, x <- x - s 1 with
+s = log(tr(exp A[x]) / n), which costs no eigendecomposition and makes
+tr exp(A[x]) = n. Fixed-point steps x <- x - ell, ell = log diag(exp A),
+are taken while some ell_i < -700 (and, with `phase = true`, while
+max ell > log(1 + delta)). Otherwise an inexact Newton step for the
+equation ell(x) = 0 is computed: the system H delta = -D ell,
+D = diag(exp ell), is solved matrix-free by conjugate gradients with
+preconditioner D, exact Hessian-vector products (two matrix
+multiplications each) and forcing tolerance eta = min(1/2, ||ell||)
+on the preconditioned residual (locally quadratic), capped at 2n
+products. Step acceptance: a non-finite or non-descent direction
+(g' delta >= 0, g = exp(ell) - 1) is replaced by a fixed-point step;
+the full step is taken untested when its predicted decrease is below
+the floating-point resolution of f and ||ell||_inf < 1e-3; otherwise
+Armijo backtracking on f from t = min(1, 2 t_prev), with a fixed-point
+step substituted if the search fails. Near the rounding floor, if
+||g||_inf < 1e-9 fails to halve three times, the computation is
+finished by fixed-point steps (terminal mode).
+
+Variants for the ablation of the paper's Section S5:
+`residual = :gradient` solves H delta = -g (Newton for grad f = 0);
+`forcing = :sqrt` uses eta = min(1/2, ||.||^{1/2}) (order 3/2);
+`normalize = false` skips the normalization; `phase = true` keeps the
+initial fixed-point phase while max ell > log(1 + delta);
+`adaptive = false` starts every line search at t = 1. The first
+version of the paper is `residual = :gradient, forcing = :sqrt,
+normalize = false, phase = true, adaptive = false`.
+`exact_hess = true` solves the same Newton system with the explicit
+O(n^4) Hessian instead of conjugate gradients (the paper's full-Newton
+comparator); everything else is identical.
+
+`preconditioner = :quadrature` replaces the diagonal preconditioner of
+the conjugate-gradient solve by the certified quadrature model M_r of
+Section S6 of the paper at every Newton step (order chosen from the
+spectral spread so that kappa(M_r^{-1} H) <= `kappa`, default 2);
+`preconditioner = :auto` applies the paper's selection rule: M_r when
+an order in [`rmin`, `rmax`] = [2, 8] certifies the bound and
+n >= `nmin` (0), the diagonal otherwise (a single certifying node
+means the diagonal solve is already fast). The forcing test is
+unchanged.
+"""
+function inv_gft(z::AbstractVector; kwargs...)
+    return _inv_gft(z; kwargs...)[1]
+end
+
+# normalization: shift so that tr exp(A[x]) = n (no eigendecomposition)
+function _normalize!(x, lam, ell)
+    c = maximum(lam)
+    s = c + log(sum(exp, lam .- c) / length(lam))
+    x .-= s; lam .-= s; ell .-= s
+    return s
+end
+
+function _inv_gft(z::AbstractVector; x0 = nothing, tol = 1e-13,
+                  maxit = 500, delta = 1.0, exact_hess = false,
+                  residual = :log, forcing = :quad, normalize = true,
+                  phase = false, adaptive = true,
+                  preconditioner = :diagonal, kappa = 2.0, rmin = 2,
+                  rmax = 8, nmin = 0)
+    residual in (:log, :gradient) || error("residual must be :log or :gradient")
+    forcing in (:quad, :sqrt) || error("forcing must be :quad or :sqrt")
+    preconditioner in (:diagonal, :quadrature, :auto) ||
+        error("preconditioner must be :diagonal, :quadrature or :auto")
     A0, n, x = _prep(z, x0)
+    builds = 0; nodes = 0; cholfail = 0; tsetup = 0.0   # preconditioner stats
+    stats() = (builds = builds, nodes = nodes, cholfail = cholfail, tsetup = tsetup)
     hist = Float64[]
     eighs = 0
     hvs = 0
     best_err = Inf
     stall = 0
     fp_finish = false
+    tprev = 1.0
     F = _eigx(A0, x); lam, Q = F.values, F.vectors; eighs += 1
-    fval(lam, x) = sum(exp, lam) - sum(x)
+    ell = logdiagexp(lam, Q)
+    normalize && _normalize!(x, lam, ell)
+    # f evaluated from the eigenvalues, scaled to avoid overflow
+    fval(lam, x) = (c = maximum(lam); exp(c) * sum(exp, lam .- c) - sum(x))
     err = Inf
     for k in 0:maxit-1
-        ell = logdiagexp(lam, Q)               # log domain: no overflow
-        if maximum(ell) > log(1.0 + delta) ||
-           minimum(ell) < -700.0               # ---- phase 1: fixed point
-            # equivalent to ||diag(exp A) - 1||_inf > delta, tested without
-            # exponentiating (g is never formed while it could overflow);
-            # the second test keeps the fixed point in charge while any
-            # diagonal of exp(A) would underflow (exp(ell) == 0 in double)
+        if (phase && maximum(ell) > log(1.0 + delta)) ||
+           minimum(ell) < -700.0               # ---- fixed-point step
             push!(hist, expm1(min(maximum(ell), 700.0)))
             x .-= ell
             F = _eigx(A0, x); lam, Q = F.values, F.vectors; eighs += 1
+            ell = logdiagexp(lam, Q)
+            normalize && _normalize!(x, lam, ell)
+            tprev = 1.0
             continue
         end
-        g = expm1.(ell)                        # finite here: |g| <= delta
+        g = expm1.(ell)
         err = maximum(abs, g)
         push!(hist, err)
         if err < tol
-            return InvResult(x, expA(lam, Q), k, eighs, hvs, err, true, hist)
+            return InvResult(x, expA(lam, Q), k, eighs, hvs, err, true, hist), lam, Q, stats()
         end
-        # near the rounding floor the Newton direction is computed from
-        # noise-dominated gradients; if progress stalls there, finish with
-        # fixed-point steps, whose update x <- x - ell remains contractive
+        # terminal mode near the rounding floor: fixed-point steps
         if err < 0.5 * best_err
             best_err = err
             stall = 0
@@ -405,49 +544,97 @@ function inv_gft(z::AbstractVector; x0 = nothing, tol = 1e-13,
             fp_finish = true
             x .-= ell
             F = _eigx(A0, x); lam, Q = F.values, F.vectors; eighs += 1
+            ell = logdiagexp(lam, Q)
+            normalize && _normalize!(x, lam, ell)
             continue
         end
-        dE = exp.(ell)                         # = diag(exp A) directly; the
-        # algebraically equal 1 + expm1(ell) cancels to 0 for ell <= -37
-        # ---- phase 2: Newton
-        L = loewner_exp(lam)
+        # ---- Newton step, all quantities scaled by e^{-c}, c = max(lam)
+        c = maximum(lam)
+        dEs = exp.(ell .- c)                   # e^{-c} diag(exp A)
+        Ls = loewner_exp(lam .- c)             # e^{-c} L
+        local rhs, nres, stopfun
+        if residual == :log
+            rhs = -dEs .* ell                  # e^{-c} (-D ell)
+            nres = norm(ell)
+            eta = min(0.5, forcing == :quad ? nres : sqrt(nres))
+            stopfun = r -> norm(r ./ dEs) <= eta * nres
+        else
+            rhs = -exp(-c) .* g                # e^{-c} (-g)
+            nres = norm(g)
+            eta = min(0.5, forcing == :quad ? nres : sqrt(nres))
+            thr = eta * norm(rhs)
+            stopfun = r -> norm(r) <= thr
+        end
         local step
-        if exact_hess                          # explicit O(n^4) Hessian:
-            # identical algorithm, only the linear solver differs
-            step = -(cholesky(Symmetric(hessian(lam, Q, L))) \ g)
-        else                                   # matrix-free preconditioned CG
-            eta = min(0.5, sqrt(norm(g)))
+        if exact_hess
+            step = try
+                cholesky(Symmetric(hessian(lam, Q, Ls))) \ rhs
+            catch
+                fill(NaN, n)
+            end
+        else                                   # preconditioned CG from 0
+            # preconditioner: diagonal D, or the quadrature model M_r
+            # (scaled by e^{-c} like the products), see quadrature_precond
+            CF = nothing
+            if preconditioner != :diagonal
+                t0 = time_ns()
+                CF, r_used = quadrature_precond(lam .- c, Q; kappa = kappa,
+                    rmin = preconditioner == :auto ? rmin : 1,
+                    rmax = preconditioner == :auto ? rmax : 40,
+                    nmin = preconditioner == :auto ? nmin : 0)
+                tsetup += (time_ns() - t0) / 1e9
+                if r_used > 0
+                    builds += 1; nodes += r_used
+                    CF === nothing && (cholfail += 1)
+                end
+            end
+            applyM = CF === nothing ? (r -> r ./ dEs) : (r -> CF \ r)
             step = zeros(n)
-            r = -copy(g)
-            p = r ./ dE
+            r = copy(rhs)
+            p = applyM(r)
             rz = dot(r, p)
-            normg = norm(g)
             for _ in 1:2n
-                Hp = hess_vec(lam, Q, L, p); hvs += 1
+                Hp = hess_vec(lam, Q, Ls, p); hvs += 1
                 a = rz / dot(p, Hp)
                 step .+= a .* p
                 r .-= a .* Hp
-                norm(r) <= eta * normg && break
-                rz_new = dot(r, r ./ dE)
-                p .= r ./ dE .+ (rz_new / rz) .* p
+                stopfun(r) && break
+                zz = applyM(r)
+                rz_new = dot(r, zz)
+                p .= zz .+ (rz_new / rz) .* p
                 rz = rz_new
             end
         end
         f0 = fval(lam, x)
         gTs = dot(g, step)
-        if -gTs <= 1e-12 * (1.0 + abs(f0))
-            # predicted decrease below float resolution of f: Newton basin
-            x .+= step
+        # ---- acceptance: finiteness and descent first
+        if !all(isfinite, step) || !(gTs < 0.0) || !isfinite(f0)
+            x .-= ell
             F = _eigx(A0, x); lam, Q = F.values, F.vectors; eighs += 1
+            ell = logdiagexp(lam, Q)
+            normalize && _normalize!(x, lam, ell)
+            tprev = 1.0
             continue
         end
-        t = 1.0
+        if -gTs <= 1e-12 * (1.0 + abs(f0)) && maximum(abs, ell) < 1e-3
+            # predicted decrease below the float resolution of f, and in
+            # the neighbourhood of the solution: full step, untested
+            x .+= step
+            F = _eigx(A0, x); lam, Q = F.values, F.vectors; eighs += 1
+            ell = logdiagexp(lam, Q)
+            normalize && _normalize!(x, lam, ell)
+            continue
+        end
+        t = adaptive ? min(1.0, 2.0 * tprev) : 1.0
         ok = false
-        lam_t, Q_t = lam, Q
-        while t >= 1e-8                        # Armijo backtracking
-            F = _eigx(A0, x + t * step); lam_t, Q_t = F.values, F.vectors
+        lam_t, Q_t, ell_t, x_t = lam, Q, ell, x
+        while t >= 1e-8                        # Armijo backtracking on f
+            x_t = x + t * step
+            F = _eigx(A0, x_t); lam_t, Q_t = F.values, F.vectors
             eighs += 1
-            ft = fval(lam_t, x + t * step)
+            ell_t = logdiagexp(lam_t, Q_t)
+            normalize && _normalize!(x_t, lam_t, ell_t)
+            ft = fval(lam_t, x_t)
             if isfinite(ft) && ft <= f0 + 1e-4 * t * gTs
                 ok = true
                 break
@@ -455,39 +642,117 @@ function inv_gft(z::AbstractVector; x0 = nothing, tol = 1e-13,
             t /= 2
         end
         if ok
-            x .+= t * step
-            lam, Q = lam_t, Q_t
+            x, lam, Q, ell = x_t, lam_t, Q_t, ell_t
+            tprev = t
         else                                   # safeguard: fixed-point step
             x .-= ell
             F = _eigx(A0, x); lam, Q = F.values, F.vectors; eighs += 1
+            ell = logdiagexp(lam, Q)
+            normalize && _normalize!(x, lam, ell)
+            tprev = 1.0
         end
     end
-    return InvResult(x, expA(lam, Q), maxit, eighs, hvs, err, false, hist)
+    return InvResult(x, expA(lam, Q), maxit, eighs, hvs, err, false, hist), lam, Q, stats()
 end
 
 """
-    inv_gft_anderson(z; x0=nothing, tol=1e-13, maxit=5000, m=5)
+    gft_predict(z_prev, x_prev, lam, Q, z_new; rtol=1e-3)
+
+Tangent predictor for sequential inversion. Given the solution `x_prev`
+of `z_prev` with its eigendecomposition `(lam, Q)` of A[x_prev; z_prev],
+returns the first-order prediction x_prev + p of the solution for
+`z_new`, with H p = -(B dz + D ell) solved by preconditioned conjugate
+gradients to relative residual `rtol` (no eigendecomposition). B dz is
+the derivative of diag(exp A) in the direction of the off-diagonal
+change, three matrix multiplications. Returns `(xhat, hvs)`.
+"""
+function gft_predict(z_prev::AbstractVector, x_prev::AbstractVector,
+                     lam::Vector{Float64}, Q::Matrix{Float64},
+                     z_new::AbstractVector; rtol = 1e-3)
+    n = length(x_prev)
+    dA = unvecl(z_new .- z_prev)
+    c = maximum(lam)
+    Ls = loewner_exp(lam .- c)
+    ell = logdiagexp(lam, Q)
+    dEs = exp.(ell .- c)
+    M = Q' * dA * Q                            # B dz (scaled): three mults
+    bdz = vec(sum((Q * (Ls .* M)) .* Q, dims = 2))
+    rhs = -(bdz .+ dEs .* ell)
+    nr = norm(rhs)
+    p = zeros(n); r = copy(rhs); pp = r ./ dEs; rz = dot(r, pp); hvs = 0
+    for _ in 1:2n
+        norm(r) <= rtol * nr && break
+        Hp = hess_vec(lam, Q, Ls, pp); hvs += 1
+        a = rz / dot(pp, Hp)
+        p .+= a .* pp
+        r .-= a .* Hp
+        rz_new = dot(r, r ./ dEs)
+        pp .= r ./ dEs .+ (rz_new / rz) .* pp
+        rz = rz_new
+    end
+    return x_prev .+ p, hvs
+end
+
+"""
+    inv_gft_path(zs; predictor=true, rtol=1e-3, tol=1e-13, kwargs...)
+
+Sequential inversion of a vector of z's with warm starts: each solve
+starts from the previous solution, or, with `predictor = true`, from
+the tangent prediction of `gft_predict`. Returns a vector of
+`InvResult` (the `hvs` field of each includes the predictor's
+products) and the number of B dz evaluations.
+"""
+function inv_gft_path(zs::AbstractVector; predictor = true, rtol = 1e-3,
+                      tol = 1e-13, kwargs...)
+    out = InvResult[]
+    x0 = nothing; lam = Float64[]; Q = zeros(0, 0); nbdz = 0
+    for (t, z) in enumerate(zs)
+        hv_pred = 0
+        if t > 1 && predictor
+            x0, hv_pred = gft_predict(zs[t-1], x0, lam, Q, z; rtol = rtol)
+            nbdz += 1
+        end
+        r, lam, Q, _ = _inv_gft(z; x0 = x0, tol = tol, kwargs...)
+        push!(out, InvResult(r.x, r.C, r.iters, r.eighs, r.hvs + hv_pred,
+                             r.err, r.converged, r.hist))
+        x0 = r.x
+    end
+    return out, nbdz
+end
+
+"""
+    inv_gft_anderson(z; x0=nothing, tol=1e-13, maxit=5000, m=5,
+                     guarded=false, theta=0.25)
 
 Anderson acceleration (type II, memory `m`) of the fixed-point map
 `g(x) = x - ell(x)`, `ell = log diag(exp(A[x]))`, with residual
 `r(x) = -ell(x)` evaluated in the log domain. One eigendecomposition per
 iteration; the mixing coefficients solve a small least-squares problem.
 A standard Jacobian-free accelerator, included as a comparator.
+
+With `guarded = true` an Anderson proposal y is accepted only if
+f(y) <= f(x) - theta V(x), V(x) = sum_i (e^{ell_i} - 1 - ell_i), the
+lower bound on the decrease of the fixed-point step (Proposition 1 of
+the paper); otherwise the memory is cleared and the fixed-point step
+is taken. Proposals are accepted untested once
+theta V(x) <= 1e-12 (1 + |f(x)|). Every step then decreases f by at
+least theta V(x), which gives global convergence (Section S5).
 """
 function inv_gft_anderson(z::AbstractVector; x0 = nothing, tol = 1e-13,
-                          maxit = 5000, m = 5)
+                          maxit = 5000, m = 5, guarded = false, theta = 0.25)
     A0, n, x = _prep(z, x0)
     hist = Float64[]
     X = Vector{Vector{Float64}}(); R = Vector{Vector{Float64}}()
-    lam, Q = zeros(n), zeros(n, n)
+    fval(lam, x) = (c = maximum(lam); exp(c) * sum(exp, lam .- c) - sum(x))
+    F = _eigx(A0, x); lam, Q = F.values, F.vectors
+    eighs = 1
+    ell = logdiagexp(lam, Q)
     err = Inf
     for k in 0:maxit-1
-        F = _eigx(A0, x); lam, Q = F.values, F.vectors
-        ell = logdiagexp(lam, Q)
         err = maximum(abs, expm1.(ell))
         push!(hist, err)
         if err < tol
-            return InvResult(x, expA(lam, Q), k, k + 1, 0, err, true, hist)
+            return InvResult(x, expA(lam, Q), k, eighs, 0, err, true, hist)
         end
         r = -ell
         push!(X, copy(x)); push!(R, copy(r))
@@ -495,19 +760,60 @@ function inv_gft_anderson(z::AbstractVector; x0 = nothing, tol = 1e-13,
             popfirst!(X); popfirst!(R)
         end
         mk = length(X) - 1
-        if mk == 0
-            x = x + r
+        local y
+        plain = mk == 0
+        if plain
+            y = x + r
         else
             dR = hcat([R[i+1] - R[i] for i in 1:mk]...)
             dX = hcat([X[i+1] - X[i] for i in 1:mk]...)
-            gam = dR \ r                       # least squares
-            x = x + r - (dX + dR) * gam
+            gam = _lstsq(dR, r)                # least squares
+            y = x + r - (dX + dR) * gam
         end
-        if !all(isfinite, x)
-            return InvResult(x, expA(lam, Q), k + 1, k + 1, 0, Inf, false, hist)
+        if !all(isfinite, y)
+            return InvResult(x, expA(lam, Q), k + 1, eighs, 0, Inf, false, hist)
+        end
+        F = _eigx(A0, y); lam_y, Q_y = F.values, F.vectors; eighs += 1
+        ell_y = logdiagexp(lam_y, Q_y)
+        if guarded && !plain
+            f0 = fval(lam, x)
+            V0 = _vfun(ell)
+            if theta * V0 > 1e-12 * (1.0 + abs(f0))
+                fy = fval(lam_y, y)
+                if !(isfinite(fy) && fy <= f0 - theta * V0)
+                    empty!(X); empty!(R)       # reject: fixed-point step
+                    y = x + r
+                    F = _eigx(A0, y); lam_y, Q_y = F.values, F.vectors; eighs += 1
+                    ell_y = logdiagexp(lam_y, Q_y)
+                end
+            end
+        end
+        x, lam, Q, ell = y, lam_y, Q_y, ell_y
+        if !all(isfinite, ell)
+            return InvResult(x, expA(lam, Q), k + 1, eighs, 0, Inf, false, hist)
         end
     end
-    return InvResult(x, expA(lam, Q), maxit, maxit, 0, err, false, hist)
+    return InvResult(x, expA(lam, Q), maxit, eighs, 0, err, false, hist)
+end
+
+# minimum-norm least-squares solution, robust to rank deficiency (for
+# memory m >= n the difference matrix is square or wide, and a plain
+# backslash would attempt an LU solve and can throw on singularity)
+function _lstsq(A::Matrix{Float64}, b::Vector{Float64})
+    F = svd(A)
+    tol = eps(Float64) * max(size(A)...) * (isempty(F.S) ? 0.0 : F.S[1])
+    sinv = [s > tol ? 1.0 / s : 0.0 for s in F.S]
+    return F.V * (sinv .* (F.U' * b))
+end
+
+# V(x) = sum_i (e^{ell_i} - 1 - ell_i), cancellation-free
+function _vfun(ell)
+    s = 0.0
+    @inbounds for t in ell
+        s += abs(t) < 1e-3 ? t * t * (0.5 + t * (1 / 6 + t * (1 / 24 + t / 120))) :
+                             expm1(t) - t
+    end
+    return s
 end
 
 """

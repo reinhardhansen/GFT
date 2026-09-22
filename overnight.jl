@@ -91,6 +91,7 @@ function main()
     # JIT warmup
     let z = gft(corr_toeplitz(10, 0.5))
         for m in values(METHODS); m(z); end
+        inv_gft_path([z, z]); inv_gft_fp(z; x0 = zeros(10)); inv_gft_broyden(z; x0 = zeros(10), warm = 0)
     end
 
     rng = MersenneTwister(SEED)
@@ -170,18 +171,25 @@ function main()
             for _ in 2:T
                 push!(seq, seq[end] + step * randn(rng, length(z0)))
             end
-            for m in ("fp", "broyden", "fpn")
+            for m in ("fp", "broyden", "fpn", "fpn_pred")
                 x0 = nothing; te = 0; tt = 0.0
-                for zt in seq
+                if m == "fpn_pred"                 # warm start + tangent predictor
                     t0 = time_ns()
-                    r = m == "fp" ?
-                            inv_gft_fp(zt; x0 = x0, tol = TOL, maxit = 5000) :
-                        m == "broyden" ?
-                            inv_gft_broyden(zt; x0 = x0, tol = TOL,
-                                            warm = x0 === nothing ? 1 : 0) :
-                            inv_gft(zt; x0 = x0, tol = TOL)
-                    tt += (time_ns() - t0) / 1e9
-                    te += r.eighs; x0 = r.x
+                    out, _ = inv_gft_path(seq; predictor = true, rtol = 1e-3, tol = TOL)
+                    tt = (time_ns() - t0) / 1e9
+                    te = sum(r.eighs for r in out)
+                else
+                    for zt in seq
+                        t0 = time_ns()
+                        r = m == "fp" ?
+                                inv_gft_fp(zt; x0 = x0, tol = TOL, maxit = 5000) :
+                            m == "broyden" ?
+                                inv_gft_broyden(zt; x0 = x0, tol = TOL,
+                                                warm = x0 === nothing ? 1 : 0) :
+                                inv_gft(zt; x0 = x0, tol = TOL)
+                        tt += (time_ns() - t0) / 1e9
+                        te += r.eighs; x0 = r.x
+                    end
                 end
                 println(f, seq_id, ",", m, ",", te / T, ",", 1e3 * tt / T)
             end
